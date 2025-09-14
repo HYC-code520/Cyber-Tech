@@ -1,0 +1,88 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Incident {
+  id            String   @id @default(cuid())
+  type          String?  // password_spray, mfa_fatigue, false_positive
+  severity      String   @default("medium") // low, medium, high, critical
+  status        String   @default("triggered") // triggered, confirmed, classified, contained, recovered, documented, closed
+  currentStep   String   @default("trigger") // trigger, confirm, classify, contain, recover
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  createdBy     String   @default("analyst")
+  
+  indicators    Indicator[]
+  actions       Action[]
+  transitions   StateTransition[]
+  reports       Report[]
+  recommendations Recommendation[]
+}
+
+model Indicator {
+  id          String   @id @default(cuid())
+  incidentId  String
+  type        String   // failed_logins, mfa_attempts, impossible_travel, etc
+  value       String   // JSON stringified value
+  confidence  Float    @default(0.5)
+  createdAt   DateTime @default(now())
+  
+  incident    Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+}
+
+model Action {
+  id          String   @id @default(cuid())
+  incidentId  String
+  type        String   // reset_password, revoke_tokens, block_ip, etc
+  status      String   @default("pending") // pending, in_progress, completed, failed
+  executedBy  String?
+  executedAt  DateTime?
+  result      String?  // JSON result
+  createdAt   DateTime @default(now())
+  
+  incident    Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+}
+
+model StateTransition {
+  id          String   @id @default(cuid())
+  incidentId  String
+  fromState   String
+  toState     String
+  reason      String?
+  timestamp   DateTime @default(now())
+  userId      String   @default("system")
+  
+  incident    Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+}
+
+model Recommendation {
+  id          String   @id @default(cuid())
+  incidentId  String
+  action      String   // Recommended action to take
+  reason      String   // Why this action is recommended
+  citation    String   // MITRE ATT&CK or CISA reference
+  priority    Int      @default(1) // 1 = highest priority
+  applied     Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  
+  incident    Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+}
+
+model Report {
+  id          String   @id @default(cuid())
+  incidentId  String
+  format      String   // pdf, json, csv
+  content     String   // Base64 or JSON content
+  createdAt   DateTime @default(now())
+  createdBy   String   @default("system")
+  
+  incident    Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+}

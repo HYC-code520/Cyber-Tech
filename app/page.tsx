@@ -1,103 +1,227 @@
-import Image from "next/image";
+'use client'
 
-export default function Home() {
+import { useState, useEffect } from 'react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { AlertTriangle, Clock, CheckCircle, Play, Plus, Shield } from 'lucide-react'
+import Link from 'next/link'
+
+export default function Dashboard() {
+  const [recentIncidents, setRecentIncidents] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/incidents')
+      .then(res => res.json())
+      .then(data => {
+        // Format the data for display
+        const formattedIncidents = data.slice(0, 3).map((incident: any) => ({
+          id: incident.id,
+          type: incident.type ? incident.type.replace('_', ' ').split(' ').map((word: string) => 
+            word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : 'Unknown Incident',
+          severity: incident.severity,
+          status: incident.status,
+          createdAt: new Date(incident.createdAt).toLocaleString()
+        }))
+        setRecentIncidents(formattedIncidents)
+        setLoading(false)
+      })
+      .catch(error => {
+        console.error('Error fetching incidents:', error)
+        setLoading(false)
+      })
+  }, [])
+
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'critical': return 'bg-red-100 text-red-800 border-red-200'
+      case 'high': return 'bg-orange-100 text-orange-800 border-orange-200'
+      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200'
+      case 'low': return 'bg-green-100 text-green-800 border-green-200'
+      default: return 'bg-slate-100 text-slate-800 border-slate-200'
+    }
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'triggered': return 'bg-red-100 text-red-800'
+      case 'confirmed': return 'bg-orange-100 text-orange-800'
+      case 'classified': return 'bg-blue-100 text-blue-800'
+      case 'contained': return 'bg-purple-100 text-purple-800'
+      case 'recovered': return 'bg-green-100 text-green-800'
+      case 'closed': return 'bg-slate-100 text-slate-800'
+      default: return 'bg-slate-100 text-slate-800'
+    }
+  }
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="min-h-screen bg-slate-50">
+      {/* Navigation */}
+      <nav className="bg-white border-b border-slate-200 px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <Shield className="h-8 w-8 text-blue-600" />
+            <div>
+              <h1 className="text-xl font-semibold text-slate-900">Identity Sentinel</h1>
+              <p className="text-sm text-slate-500">Account Compromise Decision Coach</p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-6">
+            <Link 
+              href="/" 
+              className="flex items-center space-x-2 text-slate-900 font-medium"
+            >
+              Dashboard
+            </Link>
+            <Link 
+              href="/reports" 
+              className="flex items-center space-x-2 text-slate-600 hover:text-slate-900 transition-colors"
+            >
+              Reports
+            </Link>
+            <Link 
+              href="/simulate" 
+              className="flex items-center space-x-2 text-slate-600 hover:text-slate-900 transition-colors"
+            >
+              <Play className="h-4 w-4" />
+              <span>Simulate</span>
+            </Link>
+          </div>
+        </div>
+      </nav>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      <main className="container mx-auto px-6 py-8">
+        <div className="space-y-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
+              <p className="text-slate-600 mt-1">Account compromise incident response center</p>
+            </div>
+            <div className="flex space-x-3">
+              <Button variant="outline" asChild>
+                <Link href="/simulate">
+                  <Play className="h-4 w-4 mr-2" />
+                  Try Demo
+                </Link>
+              </Button>
+              <Button asChild>
+                <Link href="/incident/new">
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Incident
+                </Link>
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Active Incidents</CardTitle>
+                <AlertTriangle className="h-4 w-4 text-orange-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">3</div>
+                <p className="text-xs text-slate-600">2 high severity</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Avg Response Time</CardTitle>
+                <Clock className="h-4 w-4 text-blue-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">12m</div>
+                <p className="text-xs text-slate-600">32% faster than last week</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Resolved Today</CardTitle>
+                <CheckCircle className="h-4 w-4 text-green-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">8</div>
+                <p className="text-xs text-slate-600">2 false positives</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Incidents</CardTitle>
+              <CardDescription>Latest account compromise investigations</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {loading ? (
+                  <div className="text-center py-4">
+                    <p className="text-slate-500">Loading incidents...</p>
+                  </div>
+                ) : recentIncidents.length === 0 ? (
+                  <div className="text-center py-4">
+                    <p className="text-slate-500">No incidents yet.</p>
+                    <p className="text-sm text-slate-400 mt-2">Click "Try Demo" to create sample incidents.</p>
+                  </div>
+                ) : (
+                  recentIncidents.map((incident) => (
+                  <div 
+                    key={incident.id}
+                    className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                  >
+                    <div className="flex items-center space-x-4">
+                      <div>
+                        <h3 className="font-medium text-slate-900">{incident.type}</h3>
+                        <p className="text-sm text-slate-500">{incident.createdAt}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Badge className={getSeverityColor(incident.severity)}>
+                        {incident.severity}
+                      </Badge>
+                      <Badge className={getStatusColor(incident.status)}>
+                        {incident.status}
+                      </Badge>
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/incident/${incident.id}`}>
+                          View
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-blue-200 bg-blue-50">
+            <CardHeader>
+              <CardTitle className="text-blue-900">Getting Started</CardTitle>
+              <CardDescription className="text-blue-700">
+                New to Identity Sentinel? Try our guided demo scenarios
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex space-x-4">
+                <Button asChild>
+                  <Link href="/simulate">
+                    <Play className="h-4 w-4 mr-2" />
+                    Try Demo Cases
+                  </Link>
+                </Button>
+                <Button variant="outline" asChild>
+                  <Link href="/docs">
+                    View Documentation
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
-  );
+  )
 }
