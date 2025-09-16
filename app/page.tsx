@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { AlertTriangle, Clock, CheckCircle, Play, Plus, Shield } from 'lucide-react'
+import { AlertTriangle, Clock, CheckCircle, Play, Plus, Shield, MonitorSpeaker, QrCode } from 'lucide-react'
 import Link from 'next/link'
 
 export default function Dashboard() {
@@ -87,6 +87,20 @@ export default function Dashboard() {
               <Play className="h-4 w-4" />
               <span>Simulate</span>
             </Link>
+            <Link 
+              href="/demo-lobby" 
+              className="flex items-center space-x-2 text-slate-600 hover:text-slate-900 transition-colors"
+            >
+              <QrCode className="h-4 w-4" />
+              <span>Live Demo</span>
+            </Link>
+            <Link 
+              href="/demo-control" 
+              className="flex items-center space-x-2 text-slate-600 hover:text-slate-900 transition-colors"
+            >
+              <MonitorSpeaker className="h-4 w-4" />
+              <span>Demo Control</span>
+            </Link>
           </div>
         </div>
       </nav>
@@ -102,10 +116,16 @@ export default function Dashboard() {
               <Button variant="outline" asChild>
                 <Link href="/simulate">
                   <Play className="h-4 w-4 mr-2" />
-                  Try Demo
+                  Scenario Demo
                 </Link>
               </Button>
               <Button asChild>
+                <Link href="/demo-lobby">
+                  <QrCode className="h-4 w-4 mr-2" />
+                  Interactive Demo
+                </Link>
+              </Button>
+              <Button variant="outline" asChild>
                 <Link href="/incident/new">
                   <Plus className="h-4 w-4 mr-2" />
                   New Incident

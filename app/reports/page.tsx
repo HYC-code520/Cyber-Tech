@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { FileText, Download, Calendar, Clock, CheckCircle2, Shield, Home, Play } from 'lucide-react'
+import { FileText, Download, Calendar, Clock, CheckCircle2, Shield, Home, Play, QrCode, MonitorSpeaker } from 'lucide-react'
 import Link from 'next/link'
 
 interface Incident {
@@ -122,6 +122,20 @@ export default function ReportsPage() {
             >
               <Play className="h-4 w-4" />
               <span>Simulate</span>
+            </Link>
+            <Link 
+              href="/demo-lobby" 
+              className="flex items-center space-x-2 text-slate-600 hover:text-slate-900 transition-colors"
+            >
+              <QrCode className="h-4 w-4" />
+              <span>Live Demo</span>
+            </Link>
+            <Link 
+              href="/demo-control" 
+              className="flex items-center space-x-2 text-slate-600 hover:text-slate-900 transition-colors"
+            >
+              <MonitorSpeaker className="h-4 w-4" />
+              <span>Demo Control</span>
             </Link>
           </div>
         </div>

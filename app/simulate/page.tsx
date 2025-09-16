@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Play, Clock, Target, AlertTriangle, Shield, Home, FileText } from 'lucide-react'
+import { Play, Clock, Target, AlertTriangle, Shield, Home, FileText, QrCode, MonitorSpeaker } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -119,6 +119,20 @@ export default function SimulatePage() {
             >
               <Play className="h-4 w-4" />
               <span>Simulate</span>
+            </Link>
+            <Link 
+              href="/demo-lobby" 
+              className="flex items-center space-x-2 text-slate-600 hover:text-slate-900 transition-colors"
+            >
+              <QrCode className="h-4 w-4" />
+              <span>Live Demo</span>
+            </Link>
+            <Link 
+              href="/demo-control" 
+              className="flex items-center space-x-2 text-slate-600 hover:text-slate-900 transition-colors"
+            >
+              <MonitorSpeaker className="h-4 w-4" />
+              <span>Demo Control</span>
             </Link>
           </div>
         </div>
