@@ -1,0 +1,206 @@
+{
+  "cases": [
+    {
+      "id": "demo-ps-001",
+      "name": "Password Spray Attack - E-commerce Company",
+      "description": "Coordinated attack targeting customer accounts with common passwords",
+      "type": "password_spray",
+      "severity": "high",
+      "indicators": [
+        {
+          "type": "failed_logins",
+          "value": 47,
+          "confidence": 0.9,
+          "description": "47 failed login attempts across multiple accounts"
+        },
+        {
+          "type": "unique_users",
+          "value": 15,
+          "confidence": 0.85,
+          "description": "15 different user accounts targeted"
+        },
+        {
+          "type": "time_window",
+          "value": 1200,
+          "confidence": 0.8,
+          "description": "Attack occurred within 20-minute window"
+        },
+        {
+          "type": "same_password_pattern",
+          "value": true,
+          "confidence": 0.95,
+          "description": "Common passwords detected: 'Password123', 'Welcome1'"
+        }
+      ],
+      "timeline": [
+        "09:45 - First failed login attempt detected",
+        "09:47 - Pattern of failures across multiple accounts identified",
+        "09:52 - Common password usage confirmed",
+        "10:05 - Attack intensity peaked with 12 attempts/minute",
+        "10:07 - Attack ceased abruptly"
+      ]
+    },
+    {
+      "id": "demo-mf-001",
+      "name": "MFA Fatigue - Finance Department",
+      "description": "Persistent MFA push notifications targeting finance manager",
+      "type": "mfa_fatigue",
+      "severity": "high",
+      "indicators": [
+        {
+          "type": "mfa_push_attempts",
+          "value": 23,
+          "confidence": 0.95,
+          "description": "23 MFA push notifications sent within 8 minutes"
+        },
+        {
+          "type": "single_user",
+          "value": true,
+          "confidence": 1.0,
+          "description": "All attempts targeted john.doe@company.com"
+        },
+        {
+          "type": "time_window",
+          "value": 480,
+          "confidence": 0.9,
+          "description": "Attack compressed into 8-minute window"
+        },
+        {
+          "type": "accepted_after_fatigue",
+          "value": true,
+          "confidence": 0.85,
+          "description": "User eventually accepted MFA request on attempt #24"
+        }
+      ],
+      "timeline": [
+        "14:32 - First MFA push notification",
+        "14:33 - Rapid succession of pushes begins (3/minute)",
+        "14:36 - User reports harassment via pushes to IT",
+        "14:38 - Attack intensity increases to 5/minute",
+        "14:40 - User accepts MFA push (likely fatigued)",
+        "14:40 - Successful login from suspicious IP"
+      ]
+    },
+    {
+      "id": "demo-fp-001",
+      "name": "False Positive - Business Travel to London",
+      "description": "Executive travel triggering impossible travel alerts",
+      "type": "false_positive_travel",
+      "severity": "low",
+      "indicators": [
+        {
+          "type": "impossible_travel",
+          "value": true,
+          "confidence": 0.7,
+          "description": "Login from London 2 hours after New York login"
+        },
+        {
+          "type": "vpn_detected",
+          "value": true,
+          "confidence": 0.9,
+          "description": "Corporate VPN connection confirmed"
+        },
+        {
+          "type": "user_confirmed",
+          "value": true,
+          "confidence": 1.0,
+          "description": "User confirmed legitimate business travel"
+        },
+        {
+          "type": "distance_km",
+          "value": 5585,
+          "confidence": 0.8,
+          "description": "5,585 km distance between login locations"
+        }
+      ],
+      "timeline": [
+        "08:15 EDT - Login from New York office (IP: 203.0.113.10)",
+        "10:45 GMT - Login from London hotel via VPN (IP: 198.51.100.15)",
+        "10:46 GMT - Impossible travel alert triggered",
+        "10:50 GMT - User contacted for verification",
+        "10:52 GMT - Business travel confirmed by user and calendar"
+      ]
+    },
+    {
+      "id": "demo-cs-001",
+      "name": "Credential Stuffing - Social Media Platform",
+      "description": "Large-scale automated attack using breached credentials",
+      "type": "credential_stuffing",
+      "severity": "critical",
+      "indicators": [
+        {
+          "type": "failed_logins",
+          "value": 1247,
+          "confidence": 0.95,
+          "description": "1,247 failed login attempts in 15 minutes"
+        },
+        {
+          "type": "unique_ips",
+          "value": 89,
+          "confidence": 0.9,
+          "description": "89 unique source IP addresses"
+        },
+        {
+          "type": "known_breach_passwords",
+          "value": true,
+          "confidence": 0.85,
+          "description": "Passwords match recent data breach patterns"
+        },
+        {
+          "type": "distributed_attempts",
+          "value": true,
+          "confidence": 0.9,
+          "description": "Geographically distributed botnet detected"
+        }
+      ],
+      "timeline": [
+        "02:15 - First wave of automated login attempts",
+        "02:18 - Rate limiting triggered on login API",
+        "02:20 - Attack switches to distributed IPs",
+        "02:25 - Peak activity: 150 attempts/minute",
+        "02:28 - Several accounts successfully compromised",
+        "02:30 - Emergency response activated"
+      ]
+    },
+    {
+      "id": "demo-st-001",
+      "name": "Suspicious Travel - Marketing Manager",
+      "description": "Unusual login pattern from high-risk country",
+      "type": "suspicious_travel",
+      "severity": "medium",
+      "indicators": [
+        {
+          "type": "impossible_travel",
+          "value": true,
+          "confidence": 0.8,
+          "description": "Login from Romania 3 hours after California login"
+        },
+        {
+          "type": "distance_km",
+          "value": 10847,
+          "confidence": 0.9,
+          "description": "10,847 km distance, physically impossible timeframe"
+        },
+        {
+          "type": "time_between_logins",
+          "value": 2700,
+          "confidence": 0.85,
+          "description": "Only 45 minutes between distant logins"
+        },
+        {
+          "type": "vpn_detected",
+          "value": false,
+          "confidence": 0.7,
+          "description": "No corporate VPN usage detected"
+        }
+      ],
+      "timeline": [
+        "16:20 PST - Normal login from San Francisco office",
+        "17:05 PST - Login attempt from Bucharest, Romania",
+        "17:05 PST - Impossible travel alert generated",
+        "17:06 PST - Account temporarily locked",
+        "17:10 PST - User contacted for verification"
+      ]
+    }
+  ]
+}
