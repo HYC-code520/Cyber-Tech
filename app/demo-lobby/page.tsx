@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Shield, ExternalLink, Copy, Check } from 'lucide-react'
 import Link from 'next/link'
+
+// Using bright mode styling instead of design system
 // QR code will be added later - for now showing direct URL
 
 export default function DemoLobbyPage() {
@@ -59,7 +61,7 @@ export default function DemoLobbyPage() {
             Experience Real-Time Cybersecurity Protection
           </p>
           <div className="flex items-center justify-center">
-            <Badge variant="outline" className="px-3 py-1">
+            <Badge className="bg-blue-100 text-blue-800 border-blue-200 px-3 py-1 hover:bg-blue-200">
               {participants} {participants === 1 ? 'participant' : 'participants'} active
             </Badge>
           </div>
@@ -85,17 +87,17 @@ export default function DemoLobbyPage() {
                 </div>
               </div>
               
-              <div className="w-full bg-slate-50 p-4 rounded-lg border">
+              <div className="w-full bg-slate-50 p-4 rounded-lg border border-slate-200">
                 <p className="text-sm font-medium text-slate-700 mb-2">Direct URL:</p>
                 <div className="flex items-center space-x-2">
-                  <code className="flex-1 text-xs text-slate-600 bg-white p-2 rounded border break-all">
+                  <code className="flex-1 text-xs text-slate-600 bg-white p-2 rounded border border-slate-200 break-all">
                     {loginUrl}
                   </code>
                   <Button 
                     size="sm" 
                     variant="outline"
                     onClick={copyToClipboard}
-                    className="flex-shrink-0"
+                    className="flex-shrink-0 border-slate-300 hover:bg-slate-100 hover:text-slate-900"
                   >
                     {copied ? (
                       <Check className="h-4 w-4" />
@@ -181,7 +183,7 @@ export default function DemoLobbyPage() {
 
               <div className="flex space-x-3">
                 <Link href="/login" className="flex-1">
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
                     <ExternalLink className="h-4 w-4 mr-2" />
                     Open Login Portal
                   </Button>
