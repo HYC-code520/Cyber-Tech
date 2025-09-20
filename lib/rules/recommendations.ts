@@ -222,6 +222,506 @@ export const recommendationMap: Record<string, { immediate: Recommendation[], fo
         category: 'optional'
       }
     ]
+  },
+  geo_based_anomaly: {
+    immediate: [
+      {
+        action: 'block_geo_location',
+        reason: 'Block access from high-risk geographic location',
+        citation: 'MITRE ATT&CK T1078.004 - Cloud Accounts',
+        priority: 1,
+        category: 'immediate'
+      },
+      {
+        action: 'require_additional_verification',
+        reason: 'Enforce step-up authentication for suspicious location',
+        citation: 'NIST SP 800-63B - Authentication Assurance',
+        priority: 2,
+        category: 'immediate'
+      },
+      {
+        action: 'check_vpn_legitimacy',
+        reason: 'Verify if VPN/proxy usage is authorized',
+        citation: 'Zero Trust Network Access',
+        priority: 3,
+        category: 'immediate'
+      }
+    ],
+    follow_up: [
+      {
+        action: 'implement_geofencing',
+        reason: 'Restrict access to approved geographic regions',
+        citation: 'ISO 27001 Access Control',
+        priority: 4,
+        category: 'follow_up'
+      },
+      {
+        action: 'review_travel_policy',
+        reason: 'Update policies for international access',
+        citation: 'CISA Telework Guidance',
+        priority: 5,
+        category: 'follow_up'
+      }
+    ],
+    optional: [
+      {
+        action: 'deploy_sase_solution',
+        reason: 'Implement Secure Access Service Edge',
+        citation: 'Gartner SASE Framework',
+        priority: 6,
+        category: 'optional'
+      }
+    ]
+  },
+  device_anomaly: {
+    immediate: [
+      {
+        action: 'block_untrusted_device',
+        reason: 'Prevent access from unrecognized device',
+        citation: 'MITRE ATT&CK T1078.001 - Default Accounts',
+        priority: 1,
+        category: 'immediate'
+      },
+      {
+        action: 'enforce_device_registration',
+        reason: 'Require device enrollment before access',
+        citation: 'Microsoft Zero Trust Deployment',
+        priority: 2,
+        category: 'immediate'
+      },
+      {
+        action: 'scan_for_malware',
+        reason: 'Check device for compromise indicators',
+        citation: 'NIST Mobile Device Security',
+        priority: 3,
+        category: 'immediate'
+      }
+    ],
+    follow_up: [
+      {
+        action: 'implement_device_trust',
+        reason: 'Deploy device trust scoring system',
+        citation: 'CIS Mobile Device Controls',
+        priority: 4,
+        category: 'follow_up'
+      },
+      {
+        action: 'enable_device_compliance',
+        reason: 'Enforce compliance checks before access',
+        citation: 'ISO 27001 Mobile Device Management',
+        priority: 5,
+        category: 'follow_up'
+      }
+    ],
+    optional: [
+      {
+        action: 'deploy_uem_solution',
+        reason: 'Implement Unified Endpoint Management',
+        citation: 'Gartner UEM Magic Quadrant',
+        priority: 6,
+        category: 'optional'
+      }
+    ]
+  },
+  unusual_time_login: {
+    immediate: [
+      {
+        action: 'alert_user_unusual_time',
+        reason: 'Notify user of access outside normal hours',
+        citation: 'MITRE ATT&CK T1078 - Valid Accounts',
+        priority: 1,
+        category: 'immediate'
+      },
+      {
+        action: 'require_manager_approval',
+        reason: 'Request authorization for after-hours access',
+        citation: 'SOC 2 Access Controls',
+        priority: 2,
+        category: 'immediate'
+      },
+      {
+        action: 'enable_session_recording',
+        reason: 'Record activity during unusual hours',
+        citation: 'PCI DSS Requirement 10',
+        priority: 3,
+        category: 'immediate'
+      }
+    ],
+    follow_up: [
+      {
+        action: 'implement_time_based_access',
+        reason: 'Configure access restrictions by time',
+        citation: 'NIST SP 800-53 AC-2',
+        priority: 4,
+        category: 'follow_up'
+      },
+      {
+        action: 'review_working_hours',
+        reason: 'Update user profiles with accurate schedules',
+        citation: 'ISO 27001 User Access Management',
+        priority: 5,
+        category: 'follow_up'
+      }
+    ],
+    optional: [
+      {
+        action: 'deploy_behavior_analytics',
+        reason: 'Implement UEBA for pattern detection',
+        citation: 'Gartner UEBA Market Guide',
+        priority: 6,
+        category: 'optional'
+      }
+    ]
+  },
+  account_takeover: {
+    immediate: [
+      {
+        action: 'lock_account_immediately',
+        reason: 'Prevent further unauthorized access',
+        citation: 'MITRE ATT&CK T1098 - Account Manipulation',
+        priority: 1,
+        category: 'immediate'
+      },
+      {
+        action: 'revoke_all_oauth_tokens',
+        reason: 'Terminate third-party application access',
+        citation: 'OAuth 2.0 Security Best Practices',
+        priority: 2,
+        category: 'immediate'
+      },
+      {
+        action: 'reset_all_credentials',
+        reason: 'Force password and MFA reset',
+        citation: 'CISA Account Security Guidance',
+        priority: 3,
+        category: 'immediate'
+      }
+    ],
+    follow_up: [
+      {
+        action: 'audit_account_changes',
+        reason: 'Review all recent account modifications',
+        citation: 'NIST Incident Response Guide',
+        priority: 4,
+        category: 'follow_up'
+      },
+      {
+        action: 'check_email_rules',
+        reason: 'Remove malicious forwarding rules',
+        citation: 'Microsoft Security Best Practices',
+        priority: 5,
+        category: 'follow_up'
+      }
+    ],
+    optional: [
+      {
+        action: 'implement_privileged_access_management',
+        reason: 'Deploy PAM solution for sensitive accounts',
+        citation: 'Gartner PAM Market Guide',
+        priority: 6,
+        category: 'optional'
+      }
+    ]
+  },
+  privilege_escalation: {
+    immediate: [
+      {
+        action: 'revoke_elevated_privileges',
+        reason: 'Remove unauthorized administrative access',
+        citation: 'MITRE ATT&CK T1078.003 - Local Accounts',
+        priority: 1,
+        category: 'immediate'
+      },
+      {
+        action: 'isolate_affected_systems',
+        reason: 'Prevent lateral movement',
+        citation: 'NIST SP 800-61r2 Containment',
+        priority: 2,
+        category: 'immediate'
+      },
+      {
+        action: 'audit_privilege_changes',
+        reason: 'Review all recent permission modifications',
+        citation: 'CIS Control 6 - Access Control',
+        priority: 3,
+        category: 'immediate'
+      }
+    ],
+    follow_up: [
+      {
+        action: 'implement_just_in_time_access',
+        reason: 'Deploy JIT privilege elevation',
+        citation: 'Microsoft Privileged Identity Management',
+        priority: 4,
+        category: 'follow_up'
+      },
+      {
+        action: 'review_service_accounts',
+        reason: 'Audit and secure service account usage',
+        citation: 'SANS Service Account Security',
+        priority: 5,
+        category: 'follow_up'
+      }
+    ],
+    optional: [
+      {
+        action: 'deploy_pim_solution',
+        reason: 'Implement Privileged Identity Management',
+        citation: 'Azure AD PIM Best Practices',
+        priority: 6,
+        category: 'optional'
+      }
+    ]
+  },
+  data_exfiltration: {
+    immediate: [
+      {
+        action: 'block_data_transfer',
+        reason: 'Stop ongoing data exfiltration',
+        citation: 'MITRE ATT&CK T1567 - Exfiltration Over Web Service',
+        priority: 1,
+        category: 'immediate'
+      },
+      {
+        action: 'revoke_file_sharing',
+        reason: 'Disable external sharing capabilities',
+        citation: 'Data Loss Prevention Best Practices',
+        priority: 2,
+        category: 'immediate'
+      },
+      {
+        action: 'quarantine_user_account',
+        reason: 'Prevent further data access',
+        citation: 'GDPR Article 33 - Breach Notification',
+        priority: 3,
+        category: 'immediate'
+      }
+    ],
+    follow_up: [
+      {
+        action: 'audit_data_access_logs',
+        reason: 'Identify scope of data exposure',
+        citation: 'HIPAA Breach Assessment',
+        priority: 4,
+        category: 'follow_up'
+      },
+      {
+        action: 'implement_dlp_policies',
+        reason: 'Deploy data loss prevention controls',
+        citation: 'NIST SP 800-171 Data Protection',
+        priority: 5,
+        category: 'follow_up'
+      }
+    ],
+    optional: [
+      {
+        action: 'deploy_casb_solution',
+        reason: 'Implement Cloud Access Security Broker',
+        citation: 'Gartner CASB Market Guide',
+        priority: 6,
+        category: 'optional'
+      }
+    ]
+  },
+  session_hijacking: {
+    immediate: [
+      {
+        action: 'terminate_all_sessions',
+        reason: 'End potentially compromised sessions',
+        citation: 'MITRE ATT&CK T1539 - Steal Web Session Cookie',
+        priority: 1,
+        category: 'immediate'
+      },
+      {
+        action: 'force_reauthentication',
+        reason: 'Require fresh authentication',
+        citation: 'OWASP Session Management Cheat Sheet',
+        priority: 2,
+        category: 'immediate'
+      },
+      {
+        action: 'rotate_session_tokens',
+        reason: 'Invalidate existing session identifiers',
+        citation: 'NIST SP 800-63B Session Management',
+        priority: 3,
+        category: 'immediate'
+      }
+    ],
+    follow_up: [
+      {
+        action: 'implement_session_binding',
+        reason: 'Bind sessions to device/location',
+        citation: 'OWASP Top 10 - Broken Authentication',
+        priority: 4,
+        category: 'follow_up'
+      },
+      {
+        action: 'enable_continuous_authentication',
+        reason: 'Deploy behavioral biometrics',
+        citation: 'FIDO Alliance Continuous Authentication',
+        priority: 5,
+        category: 'follow_up'
+      }
+    ],
+    optional: [
+      {
+        action: 'deploy_zero_trust_proxy',
+        reason: 'Implement context-aware proxy',
+        citation: 'BeyondCorp Enterprise Security',
+        priority: 6,
+        category: 'optional'
+      }
+    ]
+  },
+  api_abuse: {
+    immediate: [
+      {
+        action: 'enable_rate_limiting',
+        reason: 'Throttle excessive API requests',
+        citation: 'MITRE ATT&CK T1106 - Native API',
+        priority: 1,
+        category: 'immediate'
+      },
+      {
+        action: 'revoke_api_keys',
+        reason: 'Invalidate potentially compromised keys',
+        citation: 'OWASP API Security Top 10',
+        priority: 2,
+        category: 'immediate'
+      },
+      {
+        action: 'block_abusive_clients',
+        reason: 'Deny access from malicious sources',
+        citation: 'REST API Security Guidelines',
+        priority: 3,
+        category: 'immediate'
+      }
+    ],
+    follow_up: [
+      {
+        action: 'implement_api_gateway',
+        reason: 'Deploy centralized API management',
+        citation: 'API Gateway Security Patterns',
+        priority: 4,
+        category: 'follow_up'
+      },
+      {
+        action: 'enable_api_monitoring',
+        reason: 'Track API usage patterns',
+        citation: 'NIST API Security Guidelines',
+        priority: 5,
+        category: 'follow_up'
+      }
+    ],
+    optional: [
+      {
+        action: 'deploy_api_security_platform',
+        reason: 'Implement comprehensive API protection',
+        citation: 'Gartner API Security Tools',
+        priority: 6,
+        category: 'optional'
+      }
+    ]
+  },
+  insider_threat: {
+    immediate: [
+      {
+        action: 'monitor_user_activity',
+        reason: 'Track actions of suspected insider',
+        citation: 'MITRE ATT&CK - Insider Threat Framework',
+        priority: 1,
+        category: 'immediate'
+      },
+      {
+        action: 'restrict_sensitive_access',
+        reason: 'Limit access to critical data',
+        citation: 'CERT Insider Threat Guide',
+        priority: 2,
+        category: 'immediate'
+      },
+      {
+        action: 'preserve_forensic_evidence',
+        reason: 'Maintain audit trail for investigation',
+        citation: 'Digital Forensics Best Practices',
+        priority: 3,
+        category: 'immediate'
+      }
+    ],
+    follow_up: [
+      {
+        action: 'conduct_user_interview',
+        reason: 'Investigate suspicious behavior',
+        citation: 'HR Security Investigation Guide',
+        priority: 4,
+        category: 'follow_up'
+      },
+      {
+        action: 'review_access_necessity',
+        reason: 'Apply principle of least privilege',
+        citation: 'Zero Trust Architecture',
+        priority: 5,
+        category: 'follow_up'
+      }
+    ],
+    optional: [
+      {
+        action: 'implement_ueba_monitoring',
+        reason: 'Deploy User and Entity Behavior Analytics',
+        citation: 'Gartner UEBA Solutions',
+        priority: 6,
+        category: 'optional'
+      }
+    ]
+  },
+  supply_chain_attack: {
+    immediate: [
+      {
+        action: 'isolate_vendor_access',
+        reason: 'Quarantine third-party connections',
+        citation: 'MITRE ATT&CK T1195 - Supply Chain Compromise',
+        priority: 1,
+        category: 'immediate'
+      },
+      {
+        action: 'revoke_vendor_credentials',
+        reason: 'Terminate compromised vendor accounts',
+        citation: 'CISA Supply Chain Security',
+        priority: 2,
+        category: 'immediate'
+      },
+      {
+        action: 'audit_vendor_permissions',
+        reason: 'Review all third-party access rights',
+        citation: 'NIST Supply Chain Risk Management',
+        priority: 3,
+        category: 'immediate'
+      }
+    ],
+    follow_up: [
+      {
+        action: 'assess_vendor_security',
+        reason: 'Evaluate third-party security posture',
+        citation: 'ISO 27001 Supplier Relationships',
+        priority: 4,
+        category: 'follow_up'
+      },
+      {
+        action: 'implement_vendor_segmentation',
+        reason: 'Isolate vendor access with zero trust',
+        citation: 'Supply Chain Security Best Practices',
+        priority: 5,
+        category: 'follow_up'
+      }
+    ],
+    optional: [
+      {
+        action: 'deploy_vendor_risk_management',
+        reason: 'Implement continuous vendor monitoring',
+        citation: 'Third-Party Risk Management Framework',
+        priority: 6,
+        category: 'optional'
+      }
+    ]
   }
 }
 

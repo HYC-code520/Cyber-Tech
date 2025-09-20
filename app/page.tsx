@@ -9,23 +9,30 @@ import Link from 'next/link'
 
 export default function Dashboard() {
   const [recentIncidents, setRecentIncidents] = useState<any[]>([])
+  const [totalIncidents, setTotalIncidents] = useState(0)
+  const [highSeverityCount, setHighSeverityCount] = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     fetch('/api/incidents')
       .then(res => res.json())
       .then(data => {
-        // Handle both array and error responses
+        // Check if data is an array before processing
         if (Array.isArray(data)) {
-          const formattedIncidents = data.slice(0, 3).map((incident: any) => ({
+          // Format the data for display
+          const formattedIncidents = data.slice(0, 15).map((incident: any) => ({
             id: incident.id,
-            type: incident.type ? incident.type.replace('_', ' ').split(' ').map((word: string) => 
+            type: incident.type ? incident.type.replace('_', ' ').split(' ').map((word: string) =>
               word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : 'Unknown Incident',
             severity: incident.severity,
             status: incident.status,
             createdAt: new Date(incident.createdAt).toLocaleString()
           }))
           setRecentIncidents(formattedIncidents)
+          setTotalIncidents(data.length)
+          setHighSeverityCount(data.filter((incident: any) =>
+            incident.severity === 'high' || incident.severity === 'critical'
+          ).length)
         } else {
           console.error('API Error:', data.error || 'Unknown error')
           setRecentIncidents([])
@@ -156,8 +163,8 @@ export default function Dashboard() {
                 <AlertTriangle className="h-5 w-5 text-orange-400" />
               </CardHeader>
               <CardContent>
-                <div className="text-4xl font-bold text-orange-300">8</div>
-                <p className="text-xs text-muted-foreground mt-1">Active security alerts</p>
+                <div className="text-4xl font-bold text-orange-300">{totalIncidents}</div>
+                <p className="text-xs text-muted-foreground mt-1">{highSeverityCount} high/critical severity</p>
               </CardContent>
             </Card>
 
@@ -232,8 +239,19 @@ export default function Dashboard() {
           {/* Recent Incidents */}
           <Card className="bg-card/60 border-border/50 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle className="text-foreground">Recent Security Incidents</CardTitle>
-              <CardDescription className="text-muted-foreground">Latest account compromise investigations</CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-foreground">Recent Security Incidents</CardTitle>
+                  <CardDescription className="text-muted-foreground">Latest account compromise investigations (showing {recentIncidents.length} of {totalIncidents})</CardDescription>
+                </div>
+                {totalIncidents > 15 && (
+                  <Button variant="outline" size="sm" asChild className="border-primary/40 hover:bg-primary/20 text-foreground">
+                    <Link href="/incidents">
+                      View All {totalIncidents} Incidents
+                    </Link>
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
