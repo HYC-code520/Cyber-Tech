@@ -9,26 +9,39 @@ import Link from 'next/link'
 
 export default function Dashboard() {
   const [recentIncidents, setRecentIncidents] = useState<any[]>([])
+  const [totalIncidents, setTotalIncidents] = useState(0)
+  const [highSeverityCount, setHighSeverityCount] = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     fetch('/api/incidents')
       .then(res => res.json())
       .then(data => {
-        // Format the data for display
-        const formattedIncidents = data.slice(0, 3).map((incident: any) => ({
-          id: incident.id,
-          type: incident.type ? incident.type.replace('_', ' ').split(' ').map((word: string) => 
-            word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : 'Unknown Incident',
-          severity: incident.severity,
-          status: incident.status,
-          createdAt: new Date(incident.createdAt).toLocaleString()
-        }))
-        setRecentIncidents(formattedIncidents)
+        // Check if data is an array before processing
+        if (Array.isArray(data)) {
+          // Format the data for display
+          const formattedIncidents = data.slice(0, 15).map((incident: any) => ({
+            id: incident.id,
+            type: incident.type ? incident.type.replace('_', ' ').split(' ').map((word: string) =>
+              word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : 'Unknown Incident',
+            severity: incident.severity,
+            status: incident.status,
+            createdAt: new Date(incident.createdAt).toLocaleString()
+          }))
+          setRecentIncidents(formattedIncidents)
+          setTotalIncidents(data.length)
+          setHighSeverityCount(data.filter((incident: any) =>
+            incident.severity === 'high' || incident.severity === 'critical'
+          ).length)
+        } else {
+          // Handle error case or empty data
+          setRecentIncidents([])
+        }
         setLoading(false)
       })
       .catch(error => {
         console.error('Error fetching incidents:', error)
+        setRecentIncidents([])
         setLoading(false)
       })
   }, [])
@@ -141,8 +154,8 @@ export default function Dashboard() {
                 <AlertTriangle className="h-4 w-4 text-orange-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">3</div>
-                <p className="text-xs text-slate-600">2 high severity</p>
+                <div className="text-2xl font-bold">{totalIncidents}</div>
+                <p className="text-xs text-slate-600">{highSeverityCount} high/critical severity</p>
               </CardContent>
             </Card>
 
@@ -171,8 +184,19 @@ export default function Dashboard() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Recent Incidents</CardTitle>
-              <CardDescription>Latest account compromise investigations</CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Recent Incidents</CardTitle>
+                  <CardDescription>Latest account compromise investigations (showing {recentIncidents.length} of {totalIncidents})</CardDescription>
+                </div>
+                {totalIncidents > 15 && (
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href="/incidents">
+                      View All {totalIncidents} Incidents
+                    </Link>
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">

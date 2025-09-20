@@ -201,6 +201,406 @@
         "17:06 PST - Account temporarily locked",
         "17:10 PST - User contacted for verification"
       ]
+    },
+    {
+      "id": "demo-geo-001",
+      "name": "Geographic Anomaly - Login from Iran",
+      "description": "Login attempt from sanctioned country with VPN masking",
+      "type": "geo_based_anomaly",
+      "severity": "high",
+      "indicators": [
+        {
+          "type": "login_from_sanctioned_country",
+          "value": true,
+          "confidence": 0.95,
+          "description": "Login from Iran (sanctioned country)"
+        },
+        {
+          "type": "high_risk_country",
+          "value": true,
+          "confidence": 0.9,
+          "description": "High-risk geographic region"
+        },
+        {
+          "type": "distance_from_usual_location",
+          "value": 12500,
+          "confidence": 0.85,
+          "description": "12,500 km from user's normal location"
+        },
+        {
+          "type": "vpn_or_proxy_detected",
+          "value": true,
+          "confidence": 0.8,
+          "description": "Commercial VPN service detected"
+        }
+      ],
+      "timeline": [
+        "03:15 UTC - Login attempt from Tehran, Iran",
+        "03:15 UTC - VPN detection triggered",
+        "03:16 UTC - Sanctioned country alert raised",
+        "03:16 UTC - Account access blocked",
+        "03:17 UTC - Security team notified"
+      ]
+    },
+    {
+      "id": "demo-device-001",
+      "name": "Unrecognized Device - Jailbroken iPhone",
+      "description": "Access attempt from compromised mobile device",
+      "type": "device_anomaly",
+      "severity": "high",
+      "indicators": [
+        {
+          "type": "new_device",
+          "value": true,
+          "confidence": 0.95,
+          "description": "First-time device access"
+        },
+        {
+          "type": "device_trust_score",
+          "value": 15,
+          "confidence": 0.9,
+          "description": "Very low device trust score"
+        },
+        {
+          "type": "multiple_devices_same_time",
+          "value": true,
+          "confidence": 0.85,
+          "description": "Concurrent sessions on 3 devices"
+        },
+        {
+          "type": "jailbroken_device",
+          "value": true,
+          "confidence": 0.92,
+          "description": "iOS jailbreak detected"
+        }
+      ],
+      "timeline": [
+        "14:22 - Login from jailbroken iPhone 12",
+        "14:22 - Device security check failed",
+        "14:23 - Multiple device sessions detected",
+        "14:23 - Access restricted pending verification",
+        "14:25 - MDM policy enforcement triggered"
+      ]
+    },
+    {
+      "id": "demo-time-001",
+      "name": "Unusual Time Access - 3AM Login",
+      "description": "CFO accessing financial systems at unusual hours",
+      "type": "unusual_time_login",
+      "severity": "medium",
+      "indicators": [
+        {
+          "type": "outside_business_hours",
+          "value": true,
+          "confidence": 0.9,
+          "description": "Login at 03:00 AM local time"
+        },
+        {
+          "type": "login_time_deviation",
+          "value": 7,
+          "confidence": 0.85,
+          "description": "7 hours from normal login pattern"
+        },
+        {
+          "type": "weekend_access",
+          "value": true,
+          "confidence": 0.8,
+          "description": "Sunday morning access"
+        },
+        {
+          "type": "holiday_access",
+          "value": false,
+          "confidence": 0.75,
+          "description": "Not a holiday period"
+        }
+      ],
+      "timeline": [
+        "03:00 - CFO login detected",
+        "03:01 - Accessing financial reporting system",
+        "03:02 - Downloading Q3 reports",
+        "03:05 - Alert sent to security team",
+        "03:10 - Manager approval requested"
+      ]
+    },
+    {
+      "id": "demo-ato-001",
+      "name": "Account Takeover - Email Rules Modified",
+      "description": "Compromised account with email forwarding and OAuth grants",
+      "type": "account_takeover",
+      "severity": "critical",
+      "indicators": [
+        {
+          "type": "password_recently_changed",
+          "value": true,
+          "confidence": 0.95,
+          "description": "Password changed 30 minutes ago"
+        },
+        {
+          "type": "email_forwarding_added",
+          "value": true,
+          "confidence": 0.92,
+          "description": "Auto-forward to external email"
+        },
+        {
+          "type": "mfa_method_changed",
+          "value": true,
+          "confidence": 0.88,
+          "description": "MFA phone number changed"
+        },
+        {
+          "type": "suspicious_oauth_grant",
+          "value": true,
+          "confidence": 0.9,
+          "description": "'MailApp Pro' granted full access"
+        }
+      ],
+      "timeline": [
+        "10:15 - Password reset via phishing link",
+        "10:30 - MFA method changed to attacker phone",
+        "10:32 - Email forwarding rule created",
+        "10:35 - OAuth application authorized",
+        "10:40 - Anomaly detected and account locked"
+      ]
+    },
+    {
+      "id": "demo-priv-001",
+      "name": "Privilege Escalation - Service Account Abuse",
+      "description": "Unauthorized elevation using service account credentials",
+      "type": "privilege_escalation",
+      "severity": "high",
+      "indicators": [
+        {
+          "type": "admin_access_attempt",
+          "value": true,
+          "confidence": 0.9,
+          "description": "Attempted domain admin access"
+        },
+        {
+          "type": "role_modification_attempt",
+          "value": true,
+          "confidence": 0.85,
+          "description": "Tried to modify Azure AD roles"
+        },
+        {
+          "type": "unauthorized_group_join",
+          "value": true,
+          "confidence": 0.88,
+          "description": "Added to 'Domain Admins' group"
+        },
+        {
+          "type": "service_account_usage",
+          "value": true,
+          "confidence": 0.92,
+          "description": "svc-backup account exploited"
+        }
+      ],
+      "timeline": [
+        "11:45 - Service account credentials used",
+        "11:47 - Elevation attempt detected",
+        "11:48 - Group membership modified",
+        "11:49 - Security alert triggered",
+        "11:50 - Account disabled automatically"
+      ]
+    },
+    {
+      "id": "demo-exfil-001",
+      "name": "Data Exfiltration - Mass Download",
+      "description": "Large-scale data download to personal cloud storage",
+      "type": "data_exfiltration",
+      "severity": "critical",
+      "indicators": [
+        {
+          "type": "large_download_volume",
+          "value": 3500,
+          "confidence": 0.95,
+          "description": "3.5 GB downloaded in 10 minutes"
+        },
+        {
+          "type": "unusual_file_access_pattern",
+          "value": true,
+          "confidence": 0.9,
+          "description": "Accessing files across multiple departments"
+        },
+        {
+          "type": "external_share_created",
+          "value": true,
+          "confidence": 0.88,
+          "description": "OneDrive external share links created"
+        },
+        {
+          "type": "cloud_sync_spike",
+          "value": true,
+          "confidence": 0.85,
+          "description": "Dropbox sync activity increased 500%"
+        }
+      ],
+      "timeline": [
+        "15:30 - Unusual file access pattern begins",
+        "15:32 - Mass download initiated",
+        "15:35 - External sharing detected",
+        "15:37 - DLP alert triggered",
+        "15:38 - Network connection terminated"
+      ]
+    },
+    {
+      "id": "demo-session-001",
+      "name": "Session Hijacking - Cookie Theft",
+      "description": "Active session compromised via stolen cookies",
+      "type": "session_hijacking",
+      "severity": "high",
+      "indicators": [
+        {
+          "type": "concurrent_sessions",
+          "value": 3,
+          "confidence": 0.9,
+          "description": "3 active sessions from different locations"
+        },
+        {
+          "type": "session_location_change",
+          "value": true,
+          "confidence": 0.92,
+          "description": "Session IP changed mid-use"
+        },
+        {
+          "type": "cookie_theft_indicator",
+          "value": true,
+          "confidence": 0.85,
+          "description": "Session token reuse detected"
+        },
+        {
+          "type": "user_agent_mismatch",
+          "value": true,
+          "confidence": 0.88,
+          "description": "Browser fingerprint changed"
+        }
+      ],
+      "timeline": [
+        "09:15 - Legitimate user login",
+        "09:45 - Session token compromised",
+        "09:47 - Attacker uses stolen session",
+        "09:48 - Concurrent session detected",
+        "09:50 - All sessions terminated"
+      ]
+    },
+    {
+      "id": "demo-api-001",
+      "name": "API Abuse - Rate Limit Violation",
+      "description": "Excessive API calls attempting data scraping",
+      "type": "api_abuse",
+      "severity": "high",
+      "indicators": [
+        {
+          "type": "api_calls_per_minute",
+          "value": 450,
+          "confidence": 0.95,
+          "description": "450 API calls per minute"
+        },
+        {
+          "type": "rate_limit_violations",
+          "value": 12,
+          "confidence": 0.9,
+          "description": "12 rate limit breaches"
+        },
+        {
+          "type": "unauthorized_api_access",
+          "value": true,
+          "confidence": 0.85,
+          "description": "Accessing restricted endpoints"
+        },
+        {
+          "type": "api_key_compromise",
+          "value": true,
+          "confidence": 0.82,
+          "description": "API key used from multiple IPs"
+        }
+      ],
+      "timeline": [
+        "13:00 - Normal API usage",
+        "13:15 - Sudden spike in requests",
+        "13:16 - Rate limiting triggered",
+        "13:17 - Pattern indicates scraping",
+        "13:18 - API key revoked"
+      ]
+    },
+    {
+      "id": "demo-insider-001",
+      "name": "Insider Threat - Departing Employee",
+      "description": "Employee downloading sensitive data before resignation",
+      "type": "insider_threat",
+      "severity": "high",
+      "indicators": [
+        {
+          "type": "after_hours_access",
+          "value": true,
+          "confidence": 0.85,
+          "description": "Accessing systems after hours"
+        },
+        {
+          "type": "sensitive_data_access",
+          "value": true,
+          "confidence": 0.9,
+          "description": "Accessing customer database"
+        },
+        {
+          "type": "unusual_privilege_use",
+          "value": true,
+          "confidence": 0.88,
+          "description": "Using rarely-used admin privileges"
+        },
+        {
+          "type": "resignation_announced",
+          "value": true,
+          "confidence": 1.0,
+          "description": "Two-week notice submitted"
+        }
+      ],
+      "timeline": [
+        "Monday - Resignation submitted",
+        "Tuesday 22:00 - After-hours access begins",
+        "Tuesday 22:15 - Customer data accessed",
+        "Tuesday 22:30 - Large data export",
+        "Tuesday 22:45 - Alert triggered"
+      ]
+    },
+    {
+      "id": "demo-supply-001",
+      "name": "Supply Chain Attack - Vendor Compromise",
+      "description": "Third-party vendor account used for lateral movement",
+      "type": "supply_chain_attack",
+      "severity": "critical",
+      "indicators": [
+        {
+          "type": "third_party_service_anomaly",
+          "value": true,
+          "confidence": 0.92,
+          "description": "Unusual activity from vendor account"
+        },
+        {
+          "type": "vendor_account_compromise",
+          "value": true,
+          "confidence": 0.88,
+          "description": "Vendor credentials compromised"
+        },
+        {
+          "type": "integration_abuse",
+          "value": true,
+          "confidence": 0.85,
+          "description": "API integration exploited"
+        },
+        {
+          "type": "oauth_token_abuse",
+          "value": true,
+          "confidence": 0.9,
+          "description": "OAuth tokens used maliciously"
+        }
+      ],
+      "timeline": [
+        "08:00 - Vendor system compromised",
+        "08:30 - Lateral movement to our network",
+        "08:45 - Unusual API calls detected",
+        "09:00 - Data access attempted",
+        "09:05 - Vendor access isolated"
+      ]
     }
   ]
 }
