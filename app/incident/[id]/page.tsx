@@ -405,27 +405,27 @@ export default function IncidentPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-background">
       {/* Navigation */}
-      <nav className="bg-white border-b border-slate-200 px-6 py-4">
+      <nav className="bg-card/80 backdrop-blur-sm border-b border-border px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <Shield className="h-8 w-8 text-blue-600" />
+            <Shield className="h-8 w-8 text-primary" />
             <div>
-              <h1 className="text-xl font-semibold text-slate-900">Identity Sentinel</h1>
-              <p className="text-sm text-slate-500">Account Compromise Decision Coach</p>
+              <h1 className="text-xl font-semibold text-foreground">Identity Sentinel</h1>
+              <p className="text-sm text-muted-foreground">Account Compromise Decision Coach</p>
             </div>
           </div>
           <div className="flex items-center space-x-6">
-            <Link href="/" className="flex items-center space-x-2 text-slate-600 hover:text-slate-900 transition-colors">
+            <Link href="/" className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors px-4 py-2 rounded-lg hover:bg-muted/50">
               <Home className="h-4 w-4" />
               <span>Dashboard</span>
             </Link>
-            <Link href="/reports" className="flex items-center space-x-2 text-slate-600 hover:text-slate-900 transition-colors">
+            <Link href="/reports" className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors px-4 py-2 rounded-lg hover:bg-muted/50">
               <FileText className="h-4 w-4" />
               <span>Reports</span>
             </Link>
-            <Link href="/simulate" className="flex items-center space-x-2 text-slate-600 hover:text-slate-900 transition-colors">
+            <Link href="/simulate" className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors px-4 py-2 rounded-lg hover:bg-muted/50">
               <Play className="h-4 w-4" />
               <span>Simulate</span>
             </Link>

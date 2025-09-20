@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { FileText, Download, Calendar, Clock, CheckCircle2, Shield, Home, Play, QrCode, MonitorSpeaker } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { FileText, Download, Calendar, Clock, CheckCircle2, Shield, Home, Play, QrCode, MonitorSpeaker, Palette } from 'lucide-react'
 import Link from 'next/link'
 
 interface Incident {
@@ -41,11 +42,11 @@ export default function ReportsPage() {
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'critical': return 'bg-red-100 text-red-800 border-red-200'
+      case 'critical': return 'bg-destructive/20 text-destructive border-destructive/30'
       case 'high': return 'bg-orange-100 text-orange-800 border-orange-200'
       case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200'
       case 'low': return 'bg-green-100 text-green-800 border-green-200'
-      default: return 'bg-slate-100 text-slate-800 border-slate-200'
+      default: return 'bg-muted text-muted-foreground border-border'
     }
   }
 
@@ -56,8 +57,8 @@ export default function ReportsPage() {
       case 'contained': return 'bg-purple-100 text-purple-800'
       case 'classified': return 'bg-blue-100 text-blue-800'
       case 'confirmed': return 'bg-orange-100 text-orange-800'
-      case 'triggered': return 'bg-red-100 text-red-800'
-      default: return 'bg-slate-100 text-slate-800'
+      case 'triggered': return 'bg-destructive/20 text-destructive'
+      default: return 'bg-muted text-muted-foreground'
     }
   }
 
@@ -90,49 +91,56 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-background">
       {/* Navigation */}
-      <nav className="bg-white border-b border-slate-200 px-6 py-4">
+      <nav className="bg-card/80 backdrop-blur-sm border-b border-border px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <Shield className="h-8 w-8 text-blue-600" />
+            <Shield className="h-8 w-8 text-primary" />
             <div>
-              <h1 className="text-xl font-semibold text-slate-900">Identity Sentinel</h1>
-              <p className="text-sm text-slate-500">Account Compromise Decision Coach</p>
+              <h1 className="text-xl font-semibold text-foreground">Identity Sentinel</h1>
+              <p className="text-sm text-muted-foreground">Account Compromise Decision Coach</p>
             </div>
           </div>
           <div className="flex items-center space-x-6">
             <Link 
               href="/" 
-              className="flex items-center space-x-2 text-slate-600 hover:text-slate-900 transition-colors"
+              className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors px-4 py-2 rounded-lg hover:bg-muted/50"
             >
               <Home className="h-4 w-4" />
               <span>Dashboard</span>
             </Link>
             <Link 
               href="/reports" 
-              className="flex items-center space-x-2 text-slate-900 font-medium"
+              className="flex items-center space-x-2 text-foreground font-medium px-4 py-2 rounded-lg bg-primary/20 border border-primary/30"
             >
               <FileText className="h-4 w-4" />
               <span>Reports</span>
             </Link>
             <Link 
               href="/simulate" 
-              className="flex items-center space-x-2 text-slate-600 hover:text-slate-900 transition-colors"
+              className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors px-4 py-2 rounded-lg hover:bg-muted/50"
             >
               <Play className="h-4 w-4" />
               <span>Simulate</span>
             </Link>
             <Link 
+              href="/design-system" 
+              className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors px-4 py-2 rounded-lg hover:bg-muted/50"
+            >
+              <Palette className="h-4 w-4" />
+              <span>Design System</span>
+            </Link>
+            <Link 
               href="/demo-lobby" 
-              className="flex items-center space-x-2 text-slate-600 hover:text-slate-900 transition-colors"
+              className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors px-4 py-2 rounded-lg hover:bg-muted/50"
             >
               <QrCode className="h-4 w-4" />
               <span>Live Demo</span>
             </Link>
             <Link 
               href="/demo-control" 
-              className="flex items-center space-x-2 text-slate-600 hover:text-slate-900 transition-colors"
+              className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors px-4 py-2 rounded-lg hover:bg-muted/50"
             >
               <MonitorSpeaker className="h-4 w-4" />
               <span>Demo Control</span>
@@ -145,8 +153,8 @@ export default function ReportsPage() {
         <div className="space-y-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-slate-900">Incident Reports</h1>
-              <p className="text-slate-600 mt-1">Historical incident response activities and outcomes</p>
+              <h1 className="text-3xl font-bold text-foreground">Incident Reports</h1>
+              <p className="text-muted-foreground mt-1">Historical incident response activities and outcomes</p>
             </div>
             <Button variant="outline">
               <Download className="h-4 w-4 mr-2" />
@@ -158,33 +166,33 @@ export default function ReportsPage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Incidents</CardTitle>
-                <FileText className="h-4 w-4 text-blue-600" />
+                <FileText className="h-4 w-4 text-primary" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{incidents.length}</div>
-                <p className="text-xs text-slate-600">This month</p>
+                <p className="text-xs text-muted-foreground">This month</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Avg Resolution Time</CardTitle>
-                <Clock className="h-4 w-4 text-orange-600" />
+                <Clock className="h-4 w-4 text-primary" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">45m</div>
-                <p className="text-xs text-slate-600">15m faster than target</p>
+                <p className="text-xs text-muted-foreground">15m faster than target</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
-                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <CheckCircle2 className="h-4 w-4 text-primary" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">94%</div>
-                <p className="text-xs text-slate-600">Incidents contained successfully</p>
+                <p className="text-xs text-muted-foreground">Incidents contained successfully</p>
               </CardContent>
             </Card>
           </div>
@@ -197,24 +205,24 @@ export default function ReportsPage() {
               <div className="space-y-4">
                 {loading ? (
                   <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900 mx-auto mb-4"></div>
-                    <p className="text-slate-500">Loading incidents...</p>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                    <p className="text-muted-foreground">Loading incidents...</p>
                   </div>
                 ) : incidents.length === 0 ? (
                   <div className="text-center py-8">
-                    <FileText className="h-12 w-12 mx-auto text-slate-400 mb-4" />
-                    <p className="text-slate-500">No incidents to display</p>
-                    <p className="text-sm text-slate-400">Try running a demo simulation to generate sample data</p>
+                    <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">No incidents to display</p>
+                    <p className="text-sm text-muted-foreground">Try running a demo simulation to generate sample data</p>
                   </div>
                 ) : (
                   incidents.map((incident) => (
                     <div 
                       key={incident.id}
-                      className="flex items-center justify-between p-4 border border-slate-200 rounded-lg"
+                      className="flex items-center justify-between p-4 border border-border rounded-lg bg-card"
                     >
                       <div className="space-y-1">
                         <div className="flex items-center space-x-3">
-                          <h3 className="font-medium text-slate-900">
+                          <h3 className="font-medium text-foreground">
                             {incident.type ? (
                               <span className="capitalize">{incident.type.replace('_', ' ')}</span>
                             ) : (
@@ -229,7 +237,7 @@ export default function ReportsPage() {
                           </Badge>
                         </div>
                         
-                        <div className="flex items-center space-x-4 text-sm text-slate-500">
+                        <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                           <div className="flex items-center space-x-1">
                             <Calendar className="h-4 w-4" />
                             <span>Created {formatDate(incident.createdAt)}</span>
