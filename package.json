@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed:demo": "node scripts/seed-demo-data.js",
+    "setup:demo": "npx prisma generate && npx prisma db push && npm run seed:demo"
   },
   "dependencies": {
     "@prisma/client": "^6.16.2",

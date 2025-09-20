@@ -1,25 +1,143 @@
 
+# Identity Sentinel - Account Compromise Decision Coach
 
-Decision GPS Wizard — Identity Sentinel (MVP)
-Goal: Help analysts decide—under pressure—if an account is compromised and execute the minimal-risk containment sequence in 5 calm steps:
-Trigger → Confirm → Classify → Contain → Recover
-One decision per screen
+AI-powered incident response tool for account compromise investigations with analyst overload demonstration.
 
+## Quick Start
 
-Confidence meter (Low / Medium / High)
+### 1. Install Dependencies
+```bash
+npm install
+```
 
+### 2. Setup Database & Demo Data
+```bash
+# Setup database and load 1,810+ demo incidents
+npm run setup:demo
+```
 
-Live “Why & citation” pane (no black-box advice)
+### 3. Start Development Server
+```bash
+npm run dev
+```
 
+Visit [http://localhost:3000](http://localhost:3000) to see the analyst overload demonstration.
 
-Role views (Analyst / Manager / Client) generated from a single case record
+## Demo Data
 
+The application includes a comprehensive demo dataset with **1,810+ security incidents** across 15 different attack types:
 
-Append-only Decision Log for audit
+- **Password spray attacks** (316 incidents)
+- **Credential stuffing** (172 incidents)
+- **Data exfiltration** (311 incidents)
+- **Account takeover** (198 incidents)
+- **Privilege escalation** (349 incidents)
+- **MFA fatigue attacks** (337 incidents)
+- **Geo-based anomalies** (198 incidents)
+- **Device anomalies** (185 incidents)
+- **Unusual time logins** (162 incidents)
+- **Session hijacking** (176 incidents)
+- **API abuse** (157 incidents)
+- **Insider threats** (172 incidents)
+- **Supply chain attacks** (159 incidents)
+- **Suspicious travel** (148 incidents)
+- **False positive travel** (150 incidents)
 
+### Attack Scenarios
 
+The demo includes multiple realistic attack scenarios:
 
-Repo Structure
+- **Flash Flood** (200 incidents) - Rapid burst of attacks in short timeframe
+- **Multi-Vector** (300 incidents) - Coordinated attacks across multiple vectors
+- **Wave Attack** (800 incidents) - Sustained campaign over extended period
+- **Noise Campaign** (510 incidents) - Background noise to hide real attacks
+
+## Database Commands
+
+```bash
+# Generate Prisma client
+npx prisma generate
+
+# Push schema to database
+npx prisma db push
+
+# Load demo data only (after database setup)
+npm run seed:demo
+
+# Reset and reload everything
+npm run setup:demo
+```
+
+## Architecture
+
+### Tech Stack
+- **Frontend**: Next.js 15, React 19, TypeScript
+- **Database**: SQLite with Prisma ORM
+- **UI**: shadcn/ui components with Tailwind CSS
+- **Security Framework**: MITRE ATT&CK integration
+
+### Key Features
+- 5-step incident response wizard (Trigger → Confirm → Classify → Contain → Recover)
+- AI-powered recommendations based on MITRE ATT&CK framework
+- Real-time incident classification with confidence scoring
+- Bulk incident generation for training scenarios
+- Comprehensive reporting and analytics
+
+### State Machine
+Incidents flow through a structured state machine:
+```
+triggered → confirmed → classified → contained → recovered → closed
+```
+
+## Development
+
+### Available Scripts
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
+- `npm run seed:demo` - Load demo incidents
+- `npm run setup:demo` - Full database setup with demo data
+
+### Project Structure
+```
+├── app/                    # Next.js app router pages
+├── components/            # React components
+│   ├── ui/               # shadcn/ui base components
+│   ├── wizard/           # Incident response wizard
+│   └── recommendations/  # MITRE recommendation engine
+├── lib/                  # Core business logic
+│   ├── rules/           # Attack classification rules
+│   ├── state-machine/   # Incident flow state machine
+│   └── mock-actions/    # Simulated security actions
+├── prisma/              # Database schema and migrations
+├── data/                # Demo case definitions
+└── scripts/             # Utility scripts
+```
+
+## Demo Usage
+
+### For Security Training
+1. Run `npm run setup:demo` to load realistic incident data
+2. Navigate through the dashboard to see analyst overload
+3. Use the incident wizard to practice response procedures
+4. Generate reports to analyze attack patterns
+
+### For Development
+1. Use the `/simulate` endpoint to create custom scenarios
+2. Modify attack patterns in `lib/rules/classifications.ts`
+3. Add new recommendations in `lib/rules/recommendations.ts`
+4. Extend the state machine for custom workflows
+
+## Security Note
+
+This application is designed for **training and demonstration purposes**. All security actions are mocked and do not perform real integrations with identity providers or SIEM systems.
+
+---
+
+# Original MVP Design Document
+
+## Repo Structure
 .
 ├─ api/                      # FastAPI service (classification, actions, summaries)
 │  ├─ app/
