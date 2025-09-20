@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { StepIndicator } from '@/components/wizard/StepIndicator'
 import { AIEnhancedRecommendationPane } from '@/components/recommendations/AIEnhancedRecommendationPane'
-import { ChevronLeft, ChevronRight, User, UserCheck, AlertTriangle, Shield, RefreshCw, Home, FileText, Play } from 'lucide-react'
+import { ChevronLeft, ChevronRight, User, UserCheck, AlertTriangle, Shield, RefreshCw, Home, FileText, Play, Palette } from 'lucide-react'
 import Link from 'next/link'
 
 interface Incident {
@@ -65,9 +65,13 @@ export default function IncidentPage() {
       if (response.ok) {
         const data = await response.json()
         setIncident(data)
+      } else {
+        console.error('Failed to fetch incident:', response.status)
+        setIncident(null)
       }
     } catch (error) {
       console.error('Error fetching incident:', error)
+      setIncident(null)
     } finally {
       setLoading(false)
     }
@@ -137,11 +141,11 @@ export default function IncidentPage() {
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'critical': return 'bg-red-100 text-red-800 border-red-200'
+      case 'critical': return 'bg-destructive/20 text-destructive border-destructive/30'
       case 'high': return 'bg-orange-100 text-orange-800 border-orange-200'
       case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200'
       case 'low': return 'bg-green-100 text-green-800 border-green-200'
-      default: return 'bg-slate-100 text-slate-800 border-slate-200'
+      default: return 'bg-muted text-muted-foreground border-border'
     }
   }
 
@@ -157,26 +161,29 @@ export default function IncidentPage() {
                 <AlertTriangle className="h-5 w-5 text-orange-600" />
                 <span>Incident Triggered</span>
               </CardTitle>
+              <CardDescription>
+                Review the indicators to confirm this security incident
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <p className="text-slate-600">
+                <p className="text-muted-foreground">
                   A potential account compromise has been detected. Review the indicators below to confirm this is a legitimate security incident.
                 </p>
                 
                 <div className="space-y-3">
-                  <h4 className="font-medium text-slate-900">Detection Indicators</h4>
+                  <h4 className="font-medium text-foreground">Detection Indicators</h4>
                   {incident.indicators.map((indicator) => (
-                    <div key={indicator.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                    <div key={indicator.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border border-border">
                       <div>
-                        <p className="font-medium capitalize text-slate-900">
+                        <p className="font-medium capitalize text-foreground">
                           {indicator.type.replace('_', ' ')}
                         </p>
-                        <p className="text-sm text-slate-600">
+                        <p className="text-sm text-muted-foreground">
                           Value: {JSON.parse(indicator.value)}
                         </p>
                       </div>
-                      <Badge variant="outline" className="bg-blue-50 text-blue-800">
+                      <Badge variant="secondary" className="bg-primary/20 text-primary border border-primary/30">
                         {Math.round(indicator.confidence * 100)}% confidence
                       </Badge>
                     </div>
@@ -192,20 +199,23 @@ export default function IncidentPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <UserCheck className="h-5 w-5 text-blue-600" />
+                <UserCheck className="h-5 w-5 text-primary" />
                 <span>Confirm Incident</span>
               </CardTitle>
+              <CardDescription>
+                Verification of security incident status
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <Alert>
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
+              <Alert className="border-primary/30 bg-primary/10">
+                <AlertTriangle className="h-4 w-4 text-primary" />
+                <AlertDescription className="text-foreground">
                   Based on the indicators, this appears to be a legitimate security incident requiring immediate attention.
                 </AlertDescription>
               </Alert>
               
               <div className="mt-4">
-                <p className="text-slate-600">
+                <p className="text-muted-foreground">
                   The system has analyzed the detection indicators and recommends proceeding with the incident response process.
                 </p>
               </div>
@@ -218,27 +228,30 @@ export default function IncidentPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <Shield className="h-5 w-5 text-purple-600" />
+                <Shield className="h-5 w-5 text-primary" />
                 <span>Incident Classification</span>
               </CardTitle>
+              <CardDescription>
+                Categorization of the security incident type
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {incident.type ? (
-                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="p-4 bg-primary/10 border border-primary/30 rounded-lg">
                     <div className="flex items-center space-x-2">
-                      <Badge className="bg-green-100 text-green-800">Classified</Badge>
-                      <h3 className="font-medium text-green-900 capitalize">
+                      <Badge className="bg-primary/20 text-primary border border-primary/30">Classified</Badge>
+                      <h3 className="font-medium text-foreground capitalize">
                         {incident.type.replace('_', ' ')}
                       </h3>
                     </div>
-                    <p className="text-sm text-green-700 mt-2">
+                    <p className="text-sm text-muted-foreground mt-2">
                       Incident automatically classified based on threat intelligence patterns and attack indicators.
                     </p>
                   </div>
                 ) : (
-                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <p className="text-yellow-800">
+                  <div className="p-4 bg-muted border border-border rounded-lg">
+                    <p className="text-muted-foreground">
                       Classification in progress... Analyzing threat patterns.
                     </p>
                   </div>
@@ -253,22 +266,25 @@ export default function IncidentPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <Shield className="h-5 w-5 text-red-600" />
+                <Shield className="h-5 w-5 text-destructive" />
                 <span>Containment Actions</span>
               </CardTitle>
+              <CardDescription>
+                Execute actions to limit the incident impact
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <p className="text-slate-600">
+                <p className="text-muted-foreground">
                   Execute immediate containment actions to prevent further damage. Click actions in the recommendations panel to execute them.
                 </p>
                 
                 {incident.actions.length > 0 && (
                   <div className="space-y-2">
-                    <h4 className="font-medium text-slate-900">Executed Actions</h4>
+                    <h4 className="font-medium text-foreground">Executed Actions</h4>
                     {incident.actions.map((action) => (
-                      <div key={action.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                        <span className="capitalize">{action.type.replace('_', ' ')}</span>
+                      <div key={action.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border border-border">
+                        <span className="capitalize text-foreground">{action.type.replace('_', ' ')}</span>
                         <Badge variant={action.status === 'completed' ? 'default' : 'secondary'}>
                           {action.status}
                         </Badge>
@@ -286,13 +302,16 @@ export default function IncidentPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <RefreshCw className="h-5 w-5 text-green-600" />
+                <RefreshCw className="h-5 w-5 text-primary" />
                 <span>Recovery Phase</span>
               </CardTitle>
+              <CardDescription>
+                Restore normal operations after containment
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <p className="text-slate-600">
+                <p className="text-muted-foreground">
                   Incident has been contained. Begin recovery procedures to restore normal operations.
                 </p>
                 

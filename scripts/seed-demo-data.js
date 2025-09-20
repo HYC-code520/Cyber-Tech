@@ -13,6 +13,9 @@
  *   npm run seed:demo
  */
 
+// Import fetch for Node.js environments
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+
 const scenarios = [
   { scenario: 'flashFlood', count: 200 },
   { scenario: 'multiVector', count: 100 },
