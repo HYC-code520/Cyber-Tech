@@ -4,21 +4,71 @@ import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { AlertTriangle, Clock, CheckCircle, Play, Plus, QrCode, Activity, TrendingUp, Eye, Users } from 'lucide-react'
+import { AlertTriangle, Clock, Play, Plus, QrCode, Activity, TrendingUp, Eye, Globe } from 'lucide-react'
 import { Navbar } from '@/components/ui/navbar'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
+
+// Dynamically import the map components to avoid SSR issues
+const IncidentMap = dynamic(
+  () => import('@/components/security/incident-map/IncidentMap'),
+  { ssr: false }
+)
+
+const MapControls = dynamic(
+  () => import('@/components/security/incident-map/MapControls'),
+  { ssr: false }
+)
 
 export default function Dashboard() {
-  const [recentIncidents, setRecentIncidents] = useState<any[]>([])
+  const [recentIncidents, setRecentIncidents] = useState<Array<Record<string, any>>>([])
+  const [mapIncidents, setMapIncidents] = useState<Array<Record<string, any>>>([])
   const [loading, setLoading] = useState(true)
+  const [mapLoading, setMapLoading] = useState(true)
+  const [timeRange, setTimeRange] = useState('24')
+  const [severityFilter, setSeverityFilter] = useState('all')
+
+  const fetchMapIncidents = () => {
+    setMapLoading(true)
+    const params = new URLSearchParams({
+      hours: timeRange,
+      severity: severityFilter
+    })
+
+    fetch(`/api/incidents/locations?${params}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.incidents) {
+          setMapIncidents(data.incidents)
+        }
+        setMapLoading(false)
+      })
+      .catch(error => {
+        console.error('Error fetching map incidents:', error)
+        setMapLoading(false)
+      })
+  }
+
+  const handleExportMap = () => {
+    // Export map data as JSON
+    const dataStr = JSON.stringify(mapIncidents, null, 2)
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr)
+    const exportFileDefaultName = `incident-map-${new Date().toISOString()}.json`
+
+    const linkElement = document.createElement('a')
+    linkElement.setAttribute('href', dataUri)
+    linkElement.setAttribute('download', exportFileDefaultName)
+    linkElement.click()
+  }
 
   useEffect(() => {
+    // Fetch recent incidents for the list
     fetch('/api/incidents')
       .then(res => res.json())
       .then(data => {
         // Handle both array and error responses
         if (Array.isArray(data)) {
-          const formattedIncidents = data.slice(0, 3).map((incident: any) => ({
+          const formattedIncidents = data.slice(0, 3).map((incident: Record<string, any>) => ({
             id: incident.id,
             type: incident.type ? incident.type.replace('_', ' ').split(' ').map((word: string) => 
               word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : 'Unknown Incident',
@@ -39,6 +89,11 @@ export default function Dashboard() {
         setLoading(false)
       })
   }, [])
+
+  useEffect(() => {
+    fetchMapIncidents()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeRange, severityFilter])
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
@@ -95,6 +150,48 @@ export default function Dashboard() {
               </Button>
             </div>
           </div>
+
+          {/* Global Threat Map */}
+          <Card className="bg-card/60 border-border/50 backdrop-blur-sm">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Globe className="h-5 w-5 text-primary" />
+                  <CardTitle className="text-foreground">Global Threat Map</CardTitle>
+                </div>
+                <Badge className="bg-primary/20 text-primary">
+                  Live - Last 24 Hours
+                </Badge>
+              </div>
+              <CardDescription className="text-muted-foreground">
+                Real-time visualization of login incidents and attack patterns worldwide
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-4">
+              <MapControls
+                timeRange={timeRange}
+                onTimeRangeChange={setTimeRange}
+                severityFilter={severityFilter}
+                onSeverityFilterChange={setSeverityFilter}
+                onRefresh={fetchMapIncidents}
+                onExport={handleExportMap}
+                isLoading={mapLoading}
+                incidentCount={mapIncidents.length}
+              />
+              <div className="mt-4">
+                {mapLoading ? (
+                  <div className="flex items-center justify-center h-[600px] bg-muted/10 rounded-lg">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                      <p className="text-muted-foreground">Loading threat map...</p>
+                    </div>
+                  </div>
+                ) : (
+                  <IncidentMap incidents={mapIncidents} />
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Security Signals Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
