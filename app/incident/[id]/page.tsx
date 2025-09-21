@@ -9,8 +9,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { StepIndicator } from '@/components/wizard/StepIndicator'
 import { AIEnhancedRecommendationPane } from '@/components/recommendations/AIEnhancedRecommendationPane'
-import { ChevronLeft, ChevronRight, User, UserCheck, AlertTriangle, Shield, RefreshCw, Home, FileText, Play, Palette } from 'lucide-react'
+import { ChevronLeft, ChevronRight, User, UserCheck, AlertTriangle, Shield, RefreshCw, Home, FileText, Play, MonitorSpeaker, QrCode } from 'lucide-react'
 import Link from 'next/link'
+import { Navbar } from '@/components/ui/navbar'
 
 interface Incident {
   id: string
@@ -50,7 +51,9 @@ export default function IncidentPage() {
   const [incident, setIncident] = useState<Incident | null>(null)
   const [loading, setLoading] = useState(true)
   const [executingAction, setExecutingAction] = useState(false)
+  const [transitionLoading, setTransitionLoading] = useState(false)
   const [viewMode, setViewMode] = useState<'analyst' | 'manager'>('analyst')
+  const [error, setError] = useState<string | null>(null)
 
   const steps = ['trigger', 'confirm', 'classify', 'contain', 'recover']
   const currentStepIndex = incident ? steps.indexOf(incident.currentStep) : 0
@@ -61,16 +64,21 @@ export default function IncidentPage() {
 
   const fetchIncident = async () => {
     try {
+      setError(null)
       const response = await fetch(`/api/incidents/${incidentId}`)
       if (response.ok) {
         const data = await response.json()
         setIncident(data)
+        console.log('Fetched incident:', data) // Debug log
       } else {
-        console.error('Failed to fetch incident:', response.status)
+        const errorData = await response.json()
+        console.error('Failed to fetch incident:', response.status, errorData)
+        setError(`Failed to fetch incident: ${errorData.error || response.status}`)
         setIncident(null)
       }
     } catch (error) {
       console.error('Error fetching incident:', error)
+      setError('Network error while fetching incident')
       setIncident(null)
     } finally {
       setLoading(false)
@@ -90,9 +98,14 @@ export default function IncidentPage() {
 
       if (response.ok) {
         await fetchIncident()
+      } else {
+        const errorData = await response.json()
+        console.error('Action execution failed:', errorData)
+        setError(`Action failed: ${errorData.error}`)
       }
     } catch (error) {
       console.error('Error executing action:', error)
+      setError('Network error while executing action')
     } finally {
       setExecutingAction(false)
     }
@@ -102,20 +115,42 @@ export default function IncidentPage() {
     if (!incident) return
 
     const nextStep = steps[currentStepIndex + 1]
-    if (!nextStep) return
+    if (!nextStep) {
+      console.log('Already at final step')
+      return
+    }
 
+    console.log(`Transitioning from ${incident.currentStep} to ${nextStep}`) // Debug log
+    
+    setTransitionLoading(true)
+    setError(null)
+    
     try {
       const response = await fetch(`/api/incidents/${incident.id}/transition`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ toStep: nextStep })
+        body: JSON.stringify({ 
+          toStep: nextStep,
+          userId: 'analyst',
+          reason: `Manual transition from ${incident.currentStep} to ${nextStep}`
+        })
       })
+
+      const responseData = await response.json()
+      console.log('Transition response:', response.status, responseData) // Debug log
 
       if (response.ok) {
         await fetchIncident()
+        console.log('Transition successful')
+      } else {
+        console.error('Transition failed:', responseData)
+        setError(`Transition failed: ${responseData.error || 'Unknown error'}`)
       }
     } catch (error) {
       console.error('Error transitioning step:', error)
+      setError('Network error during transition')
+    } finally {
+      setTransitionLoading(false)
     }
   }
 
@@ -124,28 +159,47 @@ export default function IncidentPage() {
 
     const previousStep = steps[currentStepIndex - 1]
     
+    console.log(`Transitioning back from ${incident.currentStep} to ${previousStep}`) // Debug log
+    
+    setTransitionLoading(true)
+    setError(null)
+    
     try {
       const response = await fetch(`/api/incidents/${incident.id}/transition`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ toStep: previousStep })
+        body: JSON.stringify({ 
+          toStep: previousStep,
+          userId: 'analyst',
+          reason: `Manual rollback from ${incident.currentStep} to ${previousStep}`
+        })
       })
+
+      const responseData = await response.json()
+      console.log('Previous transition response:', response.status, responseData) // Debug log
 
       if (response.ok) {
         await fetchIncident()
+        console.log('Previous transition successful')
+      } else {
+        console.error('Previous transition failed:', responseData)
+        setError(`Transition failed: ${responseData.error || 'Unknown error'}`)
       }
     } catch (error) {
       console.error('Error transitioning step:', error)
+      setError('Network error during transition')
+    } finally {
+      setTransitionLoading(false)
     }
   }
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'critical': return 'bg-destructive/20 text-destructive border-destructive/30'
-      case 'high': return 'bg-orange-100 text-orange-800 border-orange-200'
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200'
-      case 'low': return 'bg-green-100 text-green-800 border-green-200'
-      default: return 'bg-muted text-muted-foreground border-border'
+      case 'critical': return 'bg-red-500/30 text-red-200 border-red-400/50'
+      case 'high': return 'bg-orange-500/30 text-orange-200 border-orange-400/50'
+      case 'medium': return 'bg-yellow-500/30 text-yellow-200 border-yellow-400/50'
+      case 'low': return 'bg-green-500/30 text-green-200 border-green-400/50'
+      default: return 'bg-slate-500/30 text-slate-200 border-slate-400/50'
     }
   }
 
@@ -155,13 +209,13 @@ export default function IncidentPage() {
     switch (incident.currentStep) {
       case 'trigger':
         return (
-          <Card>
+          <Card className="bg-card/60 border-border/50 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <AlertTriangle className="h-5 w-5 text-orange-600" />
+              <CardTitle className="flex items-center space-x-2 text-foreground">
+                <AlertTriangle className="h-5 w-5 text-orange-400" />
                 <span>Incident Triggered</span>
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-muted-foreground">
                 Review the indicators to confirm this security incident
               </CardDescription>
             </CardHeader>
@@ -174,7 +228,7 @@ export default function IncidentPage() {
                 <div className="space-y-3">
                   <h4 className="font-medium text-foreground">Detection Indicators</h4>
                   {incident.indicators.map((indicator) => (
-                    <div key={indicator.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border border-border">
+                    <div key={indicator.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border/50 backdrop-blur-sm">
                       <div>
                         <p className="font-medium capitalize text-foreground">
                           {indicator.type.replace('_', ' ')}
@@ -183,7 +237,7 @@ export default function IncidentPage() {
                           Value: {JSON.parse(indicator.value)}
                         </p>
                       </div>
-                      <Badge variant="secondary" className="bg-primary/20 text-primary border border-primary/30">
+                      <Badge className="bg-primary/30 text-primary-foreground border border-primary/40">
                         {Math.round(indicator.confidence * 100)}% confidence
                       </Badge>
                     </div>
@@ -196,18 +250,18 @@ export default function IncidentPage() {
 
       case 'confirm':
         return (
-          <Card>
+          <Card className="bg-card/60 border-border/50 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
+              <CardTitle className="flex items-center space-x-2 text-foreground">
                 <UserCheck className="h-5 w-5 text-primary" />
                 <span>Confirm Incident</span>
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-muted-foreground">
                 Verification of security incident status
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Alert className="border-primary/30 bg-primary/10">
+              <Alert className="border-primary/40 bg-primary/20 backdrop-blur-sm">
                 <AlertTriangle className="h-4 w-4 text-primary" />
                 <AlertDescription className="text-foreground">
                   Based on the indicators, this appears to be a legitimate security incident requiring immediate attention.
@@ -225,22 +279,22 @@ export default function IncidentPage() {
 
       case 'classify':
         return (
-          <Card>
+          <Card className="bg-card/60 border-border/50 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
+              <CardTitle className="flex items-center space-x-2 text-foreground">
                 <Shield className="h-5 w-5 text-primary" />
                 <span>Incident Classification</span>
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-muted-foreground">
                 Categorization of the security incident type
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {incident.type ? (
-                  <div className="p-4 bg-primary/10 border border-primary/30 rounded-lg">
+                  <div className="p-4 bg-primary/20 border border-primary/40 rounded-lg backdrop-blur-sm">
                     <div className="flex items-center space-x-2">
-                      <Badge className="bg-primary/20 text-primary border border-primary/30">Classified</Badge>
+                      <Badge className="bg-primary/30 text-primary-foreground border border-primary/40">Classified</Badge>
                       <h3 className="font-medium text-foreground capitalize">
                         {incident.type.replace('_', ' ')}
                       </h3>
@@ -250,7 +304,7 @@ export default function IncidentPage() {
                     </p>
                   </div>
                 ) : (
-                  <div className="p-4 bg-muted border border-border rounded-lg">
+                  <div className="p-4 bg-muted/30 border border-border/50 rounded-lg backdrop-blur-sm">
                     <p className="text-muted-foreground">
                       Classification in progress... Analyzing threat patterns.
                     </p>
@@ -263,13 +317,13 @@ export default function IncidentPage() {
 
       case 'contain':
         return (
-          <Card>
+          <Card className="bg-card/60 border-border/50 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Shield className="h-5 w-5 text-destructive" />
+              <CardTitle className="flex items-center space-x-2 text-foreground">
+                <Shield className="h-5 w-5 text-red-400" />
                 <span>Containment Actions</span>
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-muted-foreground">
                 Execute actions to limit the incident impact
               </CardDescription>
             </CardHeader>
@@ -283,9 +337,10 @@ export default function IncidentPage() {
                   <div className="space-y-2">
                     <h4 className="font-medium text-foreground">Executed Actions</h4>
                     {incident.actions.map((action) => (
-                      <div key={action.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border border-border">
+                      <div key={action.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border/50 backdrop-blur-sm">
                         <span className="capitalize text-foreground">{action.type.replace('_', ' ')}</span>
-                        <Badge variant={action.status === 'completed' ? 'default' : 'secondary'}>
+                        <Badge variant={action.status === 'completed' ? 'default' : 'secondary'} 
+                               className={action.status === 'completed' ? 'bg-green-500/30 text-green-200' : 'bg-yellow-500/30 text-yellow-200'}>
                           {action.status}
                         </Badge>
                       </div>
@@ -299,13 +354,13 @@ export default function IncidentPage() {
 
       case 'recover':
         return (
-          <Card>
+          <Card className="bg-card/60 border-border/50 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
+              <CardTitle className="flex items-center space-x-2 text-foreground">
                 <RefreshCw className="h-5 w-5 text-primary" />
                 <span>Recovery Phase</span>
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-muted-foreground">
                 Restore normal operations after containment
               </CardDescription>
             </CardHeader>
@@ -316,14 +371,14 @@ export default function IncidentPage() {
                 </p>
                 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <h4 className="font-medium text-green-900">Threat Neutralized</h4>
-                    <p className="text-sm text-green-700">Containment actions successfully executed</p>
+                  <div className="p-3 bg-green-500/20 border border-green-400/40 rounded-lg backdrop-blur-sm">
+                    <h4 className="font-medium text-green-200">Threat Neutralized</h4>
+                    <p className="text-sm text-green-300">Containment actions successfully executed</p>
                   </div>
                   
-                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <h4 className="font-medium text-blue-900">Ready for Recovery</h4>
-                    <p className="text-sm text-blue-700">Systems prepared for restoration</p>
+                  <div className="p-3 bg-blue-500/20 border border-blue-400/40 rounded-lg backdrop-blur-sm">
+                    <h4 className="font-medium text-blue-200">Ready for Recovery</h4>
+                    <p className="text-sm text-blue-300">Systems prepared for restoration</p>
                   </div>
                 </div>
               </div>
@@ -338,39 +393,13 @@ export default function IncidentPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        {/* Navigation */}
-        <nav className="bg-white border-b border-slate-200 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Shield className="h-8 w-8 text-blue-600" />
-              <div>
-                <h1 className="text-xl font-semibold text-slate-900">Identity Sentinel</h1>
-                <p className="text-sm text-slate-500">Account Compromise Decision Coach</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-6">
-              <Link href="/" className="flex items-center space-x-2 text-slate-600 hover:text-slate-900 transition-colors">
-                <Home className="h-4 w-4" />
-                <span>Dashboard</span>
-              </Link>
-              <Link href="/reports" className="flex items-center space-x-2 text-slate-600 hover:text-slate-900 transition-colors">
-                <FileText className="h-4 w-4" />
-                <span>Reports</span>
-              </Link>
-              <Link href="/simulate" className="flex items-center space-x-2 text-slate-600 hover:text-slate-900 transition-colors">
-                <Play className="h-4 w-4" />
-                <span>Simulate</span>
-              </Link>
-            </div>
-          </div>
-        </nav>
-
+      <div className="min-h-screen bg-background">
+        <Navbar />
         <div className="flex h-screen">
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
-              <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-slate-400" />
-              <p className="text-slate-600">Loading incident...</p>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading incident...</p>
             </div>
           </div>
         </div>
@@ -380,40 +409,15 @@ export default function IncidentPage() {
 
   if (!incident) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        {/* Navigation */}
-        <nav className="bg-white border-b border-slate-200 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Shield className="h-8 w-8 text-blue-600" />
-              <div>
-                <h1 className="text-xl font-semibold text-slate-900">Identity Sentinel</h1>
-                <p className="text-sm text-slate-500">Account Compromise Decision Coach</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-6">
-              <Link href="/" className="flex items-center space-x-2 text-slate-600 hover:text-slate-900 transition-colors">
-                <Home className="h-4 w-4" />
-                <span>Dashboard</span>
-              </Link>
-              <Link href="/reports" className="flex items-center space-x-2 text-slate-600 hover:text-slate-900 transition-colors">
-                <FileText className="h-4 w-4" />
-                <span>Reports</span>
-              </Link>
-              <Link href="/simulate" className="flex items-center space-x-2 text-slate-600 hover:text-slate-900 transition-colors">
-                <Play className="h-4 w-4" />
-                <span>Simulate</span>
-              </Link>
-            </div>
-          </div>
-        </nav>
-
+      <div className="min-h-screen bg-background">
+        <Navbar />
         <div className="flex h-screen">
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
-              <AlertTriangle className="h-8 w-8 mx-auto mb-4 text-red-500" />
-              <p className="text-slate-600">Incident not found</p>
-              <Button asChild className="mt-4">
+              <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-red-400" />
+              <p className="text-muted-foreground">Incident not found</p>
+              {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
+              <Button asChild className="mt-4 bg-primary hover:bg-primary/90">
                 <Link href="/">Return to Dashboard</Link>
               </Button>
             </div>
@@ -425,63 +429,41 @@ export default function IncidentPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="bg-card/80 backdrop-blur-sm border-b border-border px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Shield className="h-8 w-8 text-primary" />
-            <div>
-              <h1 className="text-xl font-semibold text-foreground">Identity Sentinel</h1>
-              <p className="text-sm text-muted-foreground">Account Compromise Decision Coach</p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-6">
-            <Link href="/" className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors px-4 py-2 rounded-lg hover:bg-muted/50">
-              <Home className="h-4 w-4" />
-              <span>Dashboard</span>
-            </Link>
-            <Link href="/reports" className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors px-4 py-2 rounded-lg hover:bg-muted/50">
-              <FileText className="h-4 w-4" />
-              <span>Reports</span>
-            </Link>
-            <Link href="/simulate" className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors px-4 py-2 rounded-lg hover:bg-muted/50">
-              <Play className="h-4 w-4" />
-              <span>Simulate</span>
-            </Link>
-          </div>
-        </div>
-      </nav>
-
+      <Navbar />
       <div className="flex h-screen">
         {/* Main Content - 2/3 width */}
-        <div className="flex-1 flex flex-col bg-white">
+        <div className="flex-1 flex flex-col bg-card/60 backdrop-blur-sm">
           {/* Header */}
-          <div className="border-b border-slate-200 p-6">
+          <div className="border-b border-border/50 p-6">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h1 className="text-2xl font-bold text-slate-900">
+                <h1 className="text-2xl font-bold text-foreground">
                   Incident Response Wizard
                 </h1>
                 <div className="flex items-center space-x-3 mt-1">
-                  <span className="text-slate-600">ID: {incident.id.slice(-8)}</span>
+                  <span className="text-muted-foreground">ID: {incident.id.slice(-8)}</span>
                   <Badge className={getSeverityColor(incident.severity)}>
                     {incident.severity}
                   </Badge>
                   {incident.type && (
-                    <Badge variant="outline" className="capitalize">
+                    <Badge variant="outline" className="capitalize border-border/50 text-muted-foreground">
                       {incident.type.replace('_', ' ')}
                     </Badge>
                   )}
                 </div>
+                {/* Debug info */}
+                <div className="text-xs text-muted-foreground mt-1">
+                  Current: {incident.currentStep} (step {currentStepIndex + 1}/{steps.length})
+                </div>
               </div>
               
               <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'analyst' | 'manager')}>
-                <TabsList>
-                  <TabsTrigger value="analyst" className="flex items-center space-x-1">
+                <TabsList className="bg-muted/50 border-border/50">
+                  <TabsTrigger value="analyst" className="flex items-center space-x-1 data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
                     <User className="h-4 w-4" />
                     <span>Analyst</span>
                   </TabsTrigger>
-                  <TabsTrigger value="manager" className="flex items-center space-x-1">
+                  <TabsTrigger value="manager" className="flex items-center space-x-1 data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
                     <UserCheck className="h-4 w-4" />
                     <span>Manager</span>
                   </TabsTrigger>
@@ -493,6 +475,16 @@ export default function IncidentPage() {
               steps={steps}
               currentStep={currentStepIndex}
             />
+
+            {/* Error display */}
+            {error && (
+              <Alert className="mt-4 border-red-400/40 bg-red-500/20">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription className="text-red-200">
+                  {error}
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
 
           {/* Content */}
@@ -503,46 +495,46 @@ export default function IncidentPage() {
               </TabsContent>
               
               <TabsContent value="manager" className="space-y-4">
-                <Card>
+                <Card className="bg-card/60 border-border/50 backdrop-blur-sm">
                   <CardHeader>
-                    <CardTitle>Executive Summary</CardTitle>
+                    <CardTitle className="text-foreground">Executive Summary</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-2 gap-6">
                       <div>
-                        <h4 className="font-medium text-slate-900 mb-2">Incident Overview</h4>
+                        <h4 className="font-medium text-foreground mb-2">Incident Overview</h4>
                         <div className="space-y-2">
                           <div className="flex justify-between">
-                            <span className="text-slate-600">Type:</span>
-                            <span className="capitalize">{incident.type?.replace('_', ' ') || 'Classifying...'}</span>
+                            <span className="text-muted-foreground">Type:</span>
+                            <span className="capitalize text-foreground">{incident.type?.replace('_', ' ') || 'Classifying...'}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-slate-600">Severity:</span>
-                            <Badge className={getSeverityColor(incident.severity)} variant="outline">
+                            <span className="text-muted-foreground">Severity:</span>
+                            <Badge className={getSeverityColor(incident.severity)}>
                               {incident.severity}
                             </Badge>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-slate-600">Status:</span>
-                            <span className="capitalize">{incident.status}</span>
+                            <span className="text-muted-foreground">Status:</span>
+                            <span className="capitalize text-foreground">{incident.status}</span>
                           </div>
                         </div>
                       </div>
                       
                       <div>
-                        <h4 className="font-medium text-slate-900 mb-2">Response Progress</h4>
+                        <h4 className="font-medium text-foreground mb-2">Response Progress</h4>
                         <div className="space-y-2">
                           <div className="flex justify-between">
-                            <span className="text-slate-600">Actions Taken:</span>
-                            <span>{incident.actions.length}</span>
+                            <span className="text-muted-foreground">Actions Taken:</span>
+                            <span className="text-foreground">{incident.actions.length}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-slate-600">Step:</span>
-                            <span className="capitalize">{incident.currentStep}</span>
+                            <span className="text-muted-foreground">Step:</span>
+                            <span className="capitalize text-foreground">{incident.currentStep}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-slate-600">Progress:</span>
-                            <span>{Math.round((currentStepIndex / (steps.length - 1)) * 100)}%</span>
+                            <span className="text-muted-foreground">Progress:</span>
+                            <span className="text-foreground">{Math.round((currentStepIndex / (steps.length - 1)) * 100)}%</span>
                           </div>
                         </div>
                       </div>
@@ -554,22 +546,24 @@ export default function IncidentPage() {
           </div>
 
           {/* Navigation */}
-          <div className="border-t border-slate-200 p-6">
+          <div className="border-t border-border/50 p-6">
             <div className="flex justify-between">
               <Button 
                 variant="outline" 
                 onClick={transitionToPreviousStep}
-                disabled={currentStepIndex <= 0}
+                disabled={currentStepIndex <= 0 || transitionLoading}
+                className="border-primary/40 hover:bg-primary/20 text-foreground"
               >
                 <ChevronLeft className="h-4 w-4 mr-2" />
-                Previous
+                {transitionLoading ? 'Loading...' : 'Previous'}
               </Button>
               
               <Button 
                 onClick={transitionToNextStep}
-                disabled={currentStepIndex >= steps.length - 1}
+                disabled={currentStepIndex >= steps.length - 1 || transitionLoading}
+                className="bg-primary hover:bg-primary/90"
               >
-                Next
+                {transitionLoading ? 'Loading...' : 'Next'}
                 <ChevronRight className="h-4 w-4 ml-2" />
               </Button>
             </div>

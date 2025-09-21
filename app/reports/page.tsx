@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { FileText, Download, Calendar, Clock, CheckCircle2, Shield, Home, Play, QrCode, MonitorSpeaker, Palette } from 'lucide-react'
+import { FileText, Download, Calendar, Clock } from 'lucide-react'
+import { Navbar } from '@/components/ui/navbar'
 import Link from 'next/link'
 
 interface Incident {
@@ -31,34 +31,40 @@ export default function ReportsPage() {
     fetch('/api/incidents')
       .then(res => res.json())
       .then(data => {
-        setIncidents(data)
+        if (Array.isArray(data)) {
+          setIncidents(data)
+        } else {
+          console.error('API Error:', data.error || 'Unknown error')
+          setIncidents([])
+        }
         setLoading(false)
       })
       .catch(error => {
         console.error('Error fetching incidents:', error)
+        setIncidents([])
         setLoading(false)
       })
   }, [])
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'critical': return 'bg-destructive/20 text-destructive border-destructive/30'
-      case 'high': return 'bg-orange-100 text-orange-800 border-orange-200'
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200'
-      case 'low': return 'bg-green-100 text-green-800 border-green-200'
-      default: return 'bg-muted text-muted-foreground border-border'
+      case 'critical': return 'bg-red-500/30 text-red-200 border-red-400/50'
+      case 'high': return 'bg-orange-500/30 text-orange-200 border-orange-400/50'
+      case 'medium': return 'bg-yellow-500/30 text-yellow-200 border-yellow-400/50'
+      case 'low': return 'bg-green-500/30 text-green-200 border-green-400/50'
+      default: return 'bg-slate-500/30 text-slate-200 border-slate-400/50'
     }
   }
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'closed': return 'bg-green-100 text-green-800'
-      case 'recovered': return 'bg-green-100 text-green-800'
-      case 'contained': return 'bg-purple-100 text-purple-800'
-      case 'classified': return 'bg-blue-100 text-blue-800'
-      case 'confirmed': return 'bg-orange-100 text-orange-800'
-      case 'triggered': return 'bg-destructive/20 text-destructive'
-      default: return 'bg-muted text-muted-foreground'
+      case 'closed': return 'bg-green-500/30 text-green-200'
+      case 'recovered': return 'bg-green-500/30 text-green-200'
+      case 'contained': return 'bg-purple-500/30 text-purple-200'
+      case 'classified': return 'bg-blue-500/30 text-blue-200'
+      case 'confirmed': return 'bg-orange-500/30 text-orange-200'
+      case 'triggered': return 'bg-red-500/30 text-red-200'
+      default: return 'bg-slate-500/30 text-slate-200'
     }
   }
 
@@ -92,142 +98,109 @@ export default function ReportsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="bg-card/80 backdrop-blur-sm border-b border-border px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Shield className="h-8 w-8 text-primary" />
-            <div>
-              <h1 className="text-xl font-semibold text-foreground">Identity Sentinel</h1>
-              <p className="text-sm text-muted-foreground">Account Compromise Decision Coach</p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-6">
-            <Link 
-              href="/" 
-              className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors px-4 py-2 rounded-lg hover:bg-muted/50"
-            >
-              <Home className="h-4 w-4" />
-              <span>Dashboard</span>
-            </Link>
-            <Link 
-              href="/reports" 
-              className="flex items-center space-x-2 text-foreground font-medium px-4 py-2 rounded-lg bg-primary/20 border border-primary/30"
-            >
-              <FileText className="h-4 w-4" />
-              <span>Reports</span>
-            </Link>
-            <Link 
-              href="/simulate" 
-              className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors px-4 py-2 rounded-lg hover:bg-muted/50"
-            >
-              <Play className="h-4 w-4" />
-              <span>Simulate</span>
-            </Link>
-            <Link 
-              href="/design-system" 
-              className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors px-4 py-2 rounded-lg hover:bg-muted/50"
-            >
-              <Palette className="h-4 w-4" />
-              <span>Design System</span>
-            </Link>
-            <Link 
-              href="/demo-lobby" 
-              className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors px-4 py-2 rounded-lg hover:bg-muted/50"
-            >
-              <QrCode className="h-4 w-4" />
-              <span>Live Demo</span>
-            </Link>
-            <Link 
-              href="/demo-control" 
-              className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors px-4 py-2 rounded-lg hover:bg-muted/50"
-            >
-              <MonitorSpeaker className="h-4 w-4" />
-              <span>Demo Control</span>
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       <main className="container mx-auto px-6 py-8">
         <div className="space-y-8">
+          {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Incident Reports</h1>
-              <p className="text-muted-foreground mt-1">Historical incident response activities and outcomes</p>
+              <h1 className="text-3xl font-bold text-foreground">Security Reports & Analytics</h1>
+              <p className="text-muted-foreground mt-1">Comprehensive incident reporting and analysis</p>
             </div>
-            <Button variant="outline">
+            <Button className="bg-primary hover:bg-primary/90">
               <Download className="h-4 w-4 mr-2" />
-              Export All
+              Export All Reports
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Incidents</CardTitle>
-                <FileText className="h-4 w-4 text-primary" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{incidents.length}</div>
-                <p className="text-xs text-muted-foreground">This month</p>
+          {/* Statistics Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <Card className="bg-card/60 border-border/50 backdrop-blur-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total Incidents</p>
+                    <p className="text-2xl font-bold text-foreground">{incidents.length}</p>
+                  </div>
+                  <FileText className="h-8 w-8 text-primary" />
+                </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Avg Resolution Time</CardTitle>
-                <Clock className="h-4 w-4 text-primary" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">45m</div>
-                <p className="text-xs text-muted-foreground">15m faster than target</p>
+            <Card className="bg-card/60 border-border/50 backdrop-blur-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Critical Incidents</p>
+                    <p className="text-2xl font-bold text-red-400">
+                      {incidents.filter(i => i.severity === 'critical').length}
+                    </p>
+                  </div>
+                  <Calendar className="h-8 w-8 text-red-400" />
+                </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
-                <CheckCircle2 className="h-4 w-4 text-primary" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">94%</div>
-                <p className="text-xs text-muted-foreground">Incidents contained successfully</p>
+            <Card className="bg-card/60 border-border/50 backdrop-blur-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Resolved</p>
+                    <p className="text-2xl font-bold text-green-400">
+                      {incidents.filter(i => ['closed', 'recovered'].includes(i.status)).length}
+                    </p>
+                  </div>
+                  <Clock className="h-8 w-8 text-green-400" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card/60 border-border/50 backdrop-blur-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Avg Response Time</p>
+                    <p className="text-2xl font-bold text-cyan-400">12m</p>
+                  </div>
+                  <Clock className="h-8 w-8 text-cyan-400" />
+                </div>
               </CardContent>
             </Card>
           </div>
 
-          <Card>
+          {/* Incidents List */}
+          <Card className="bg-card/60 border-border/50 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle>Incident History</CardTitle>
+              <CardTitle className="text-foreground">Incident Reports</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {loading ? (
                   <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                    <p className="text-muted-foreground">Loading incidents...</p>
+                    <p className="text-muted-foreground">Loading reports...</p>
                   </div>
                 ) : incidents.length === 0 ? (
                   <div className="text-center py-8">
-                    <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">No incidents to display</p>
-                    <p className="text-sm text-muted-foreground">Try running a demo simulation to generate sample data</p>
+                    <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">No incidents to report.</p>
+                    <p className="text-sm text-muted-foreground mt-2">Create incidents via simulation to generate reports.</p>
                   </div>
                 ) : (
                   incidents.map((incident) => (
                     <div 
                       key={incident.id}
-                      className="flex items-center justify-between p-4 border border-border rounded-lg bg-card"
+                      className="flex items-center justify-between p-4 border border-border/50 rounded-lg hover:bg-muted/30 transition-colors backdrop-blur-sm"
                     >
                       <div className="space-y-1">
                         <div className="flex items-center space-x-3">
                           <h3 className="font-medium text-foreground">
                             {incident.type ? (
-                              <span className="capitalize">{incident.type.replace('_', ' ')}</span>
-                            ) : (
-                              `Incident ${incident.id.slice(-8)}`
-                            )}
+                              <span className="capitalize">
+                                {incident.type.replace('_', ' ')}
+                              </span>
+                            ) : `Incident ${incident.id.slice(-8)}`}
                           </h3>
                           <Badge className={getSeverityColor(incident.severity)}>
                             {incident.severity}
@@ -236,21 +209,24 @@ export default function ReportsPage() {
                             {incident.status}
                           </Badge>
                         </div>
-                        
                         <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                           <div className="flex items-center space-x-1">
                             <Calendar className="h-4 w-4" />
                             <span>Created {formatDate(incident.createdAt)}</span>
                           </div>
                           <div className="flex items-center space-x-1">
-                            <CheckCircle2 className="h-4 w-4" />
+                            <Clock className="h-4 w-4" />
                             <span>{incident.actions.length} actions taken</span>
                           </div>
                         </div>
                       </div>
-                      
                       <div className="flex items-center space-x-2">
-                        <Button variant="outline" size="sm" onClick={() => generateReport(incident.id)}>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => generateReport(incident.id)}
+                          className="border-primary/40 hover:bg-primary/20 text-foreground"
+                        >
                           <Download className="h-4 w-4 mr-1" />
                           Export
                         </Button>

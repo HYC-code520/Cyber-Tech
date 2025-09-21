@@ -4,35 +4,29 @@ import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { AlertTriangle, Clock, CheckCircle, Play, Plus, Shield, MonitorSpeaker, QrCode, Activity, TrendingUp, Eye, Users, Palette } from 'lucide-react'
+import { AlertTriangle, Clock, CheckCircle, Play, Plus, QrCode, Activity, TrendingUp, Eye, Users } from 'lucide-react'
+import { Navbar } from '@/components/ui/navbar'
 import Link from 'next/link'
 
 export default function Dashboard() {
   const [recentIncidents, setRecentIncidents] = useState<any[]>([])
-  const [totalIncidents, setTotalIncidents] = useState(0)
-  const [highSeverityCount, setHighSeverityCount] = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     fetch('/api/incidents')
       .then(res => res.json())
       .then(data => {
-        // Check if data is an array before processing
+        // Handle both array and error responses
         if (Array.isArray(data)) {
-          // Format the data for display
-          const formattedIncidents = data.slice(0, 15).map((incident: any) => ({
+          const formattedIncidents = data.slice(0, 3).map((incident: any) => ({
             id: incident.id,
-            type: incident.type ? incident.type.replace('_', ' ').split(' ').map((word: string) =>
+            type: incident.type ? incident.type.replace('_', ' ').split(' ').map((word: string) => 
               word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : 'Unknown Incident',
             severity: incident.severity,
             status: incident.status,
             createdAt: new Date(incident.createdAt).toLocaleString()
           }))
           setRecentIncidents(formattedIncidents)
-          setTotalIncidents(data.length)
-          setHighSeverityCount(data.filter((incident: any) =>
-            incident.severity === 'high' || incident.severity === 'critical'
-          ).length)
         } else {
           console.error('API Error:', data.error || 'Unknown error')
           setRecentIncidents([])
@@ -70,60 +64,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="bg-card/80 backdrop-blur-sm border-b border-border px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Shield className="h-8 w-8 text-primary" />
-            <div>
-              <h1 className="text-xl font-semibold text-foreground">Identity Sentinel</h1>
-              <p className="text-sm text-muted-foreground">Security Monitoring - Account Compromise Investigation</p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-6">
-            <Link 
-              href="/" 
-              className="flex items-center space-x-2 text-foreground font-medium px-4 py-2 rounded-lg bg-primary/20 border border-primary/30"
-            >
-              Dashboard
-            </Link>
-            <Link 
-              href="/reports" 
-              className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors px-4 py-2 rounded-lg hover:bg-muted/50"
-            >
-              Reports
-            </Link>
-            <Link 
-              href="/simulate" 
-              className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors px-4 py-2 rounded-lg hover:bg-muted/50"
-            >
-              <Play className="h-4 w-4" />
-              <span>Simulate</span>
-            </Link>
-            <Link 
-              href="/design-system" 
-              className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors px-4 py-2 rounded-lg hover:bg-muted/50"
-            >
-              <Palette className="h-4 w-4" />
-              <span>Design System</span>
-            </Link>
-            <Link 
-              href="/demo-lobby" 
-              className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors px-4 py-2 rounded-lg hover:bg-muted/50"
-            >
-              <QrCode className="h-4 w-4" />
-              <span>Live Demo</span>
-            </Link>
-            <Link 
-              href="/demo-control" 
-              className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors px-4 py-2 rounded-lg hover:bg-muted/50"
-            >
-              <MonitorSpeaker className="h-4 w-4" />
-              <span>Demo Control</span>
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       <main className="container mx-auto px-6 py-8">
         <div className="space-y-8">
@@ -163,8 +104,8 @@ export default function Dashboard() {
                 <AlertTriangle className="h-5 w-5 text-orange-400" />
               </CardHeader>
               <CardContent>
-                <div className="text-4xl font-bold text-orange-300">{totalIncidents}</div>
-                <p className="text-xs text-muted-foreground mt-1">{highSeverityCount} high/critical severity</p>
+                <div className="text-4xl font-bold text-orange-300">8</div>
+                <p className="text-xs text-muted-foreground mt-1">Active security alerts</p>
               </CardContent>
             </Card>
 
@@ -204,22 +145,22 @@ export default function Dashboard() {
 
           {/* Security Signals by Severity */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <Card className="bg-primary/20 border-primary/40 backdrop-blur-sm">
+            <Card className="bg-cyan-400/20 border-cyan-400/40 backdrop-blur-sm">
               <CardContent className="p-6 text-center">
-                <div className="text-3xl font-bold text-primary-foreground">5</div>
-                <p className="text-sm text-primary-foreground font-medium">INFOs</p>
+                <div className="text-3xl font-bold text-cyan-200">5</div>
+                <p className="text-sm text-cyan-300 font-medium">INFOs</p>
               </CardContent>
             </Card>
-            <Card className="bg-primary/20 border-primary/40 backdrop-blur-sm">
+            <Card className="bg-yellow-400/20 border-yellow-400/40 backdrop-blur-sm">
               <CardContent className="p-6 text-center">
-                <div className="text-3xl font-bold text-primary-foreground">2</div>
-                <p className="text-sm text-primary-foreground font-medium">LOWs</p>
+                <div className="text-3xl font-bold text-yellow-200">2</div>
+                <p className="text-sm text-yellow-300 font-medium">LOWs</p>
               </CardContent>
             </Card>
-            <Card className="bg-primary/30 border-primary/50 backdrop-blur-sm">
+            <Card className="bg-orange-400/20 border-orange-400/40 backdrop-blur-sm">
               <CardContent className="p-6 text-center">
-                <div className="text-3xl font-bold text-primary-foreground">1</div>
-                <p className="text-sm text-primary-foreground font-medium">MEDIUMs</p>
+                <div className="text-3xl font-bold text-orange-200">1</div>
+                <p className="text-sm text-orange-300 font-medium">MEDIUMs</p>
               </CardContent>
             </Card>
             <Card className="bg-red-400/20 border-red-400/40 backdrop-blur-sm">
@@ -239,19 +180,8 @@ export default function Dashboard() {
           {/* Recent Incidents */}
           <Card className="bg-card/60 border-border/50 backdrop-blur-sm">
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-foreground">Recent Security Incidents</CardTitle>
-                  <CardDescription className="text-muted-foreground">Latest account compromise investigations (showing {recentIncidents.length} of {totalIncidents})</CardDescription>
-                </div>
-                {totalIncidents > 15 && (
-                  <Button variant="outline" size="sm" asChild className="border-primary/40 hover:bg-primary/20 text-foreground">
-                    <Link href="/incidents">
-                      View All {totalIncidents} Incidents
-                    </Link>
-                  </Button>
-                )}
-              </div>
+              <CardTitle className="text-foreground">Recent Security Incidents</CardTitle>
+              <CardDescription className="text-muted-foreground">Latest account compromise investigations</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">

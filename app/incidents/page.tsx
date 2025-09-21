@@ -6,7 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { AlertTriangle, Search, Filter, ArrowLeft, Shield } from 'lucide-react'
+import { AlertTriangle, Search, Filter, ArrowLeft, Activity, Clock, Eye } from 'lucide-react'
+import { Navbar } from '@/components/ui/navbar'
 import Link from 'next/link'
 
 export default function IncidentsPage() {
@@ -36,11 +37,17 @@ export default function IncidentsPage() {
           }))
           setIncidents(formattedIncidents)
           setFilteredIncidents(formattedIncidents)
+        } else {
+          console.error('API Error:', data.error || 'Unknown error')
+          setIncidents([])
+          setFilteredIncidents([])
         }
         setLoading(false)
       })
       .catch(error => {
         console.error('Error fetching incidents:', error)
+        setIncidents([])
+        setFilteredIncidents([])
         setLoading(false)
       })
   }, [])
@@ -61,23 +68,33 @@ export default function IncidentsPage() {
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'critical': return 'bg-red-100 text-red-800 border-red-200'
-      case 'high': return 'bg-orange-100 text-orange-800 border-orange-200'
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200'
-      case 'low': return 'bg-green-100 text-green-800 border-green-200'
-      default: return 'bg-slate-100 text-slate-800 border-slate-200'
+      case 'critical': return 'bg-red-500/30 text-red-200 border-red-400/50'
+      case 'high': return 'bg-orange-500/30 text-orange-200 border-orange-400/50'
+      case 'medium': return 'bg-yellow-500/30 text-yellow-200 border-yellow-400/50'
+      case 'low': return 'bg-green-500/30 text-green-200 border-green-400/50'
+      default: return 'bg-slate-500/30 text-slate-200 border-slate-400/50'
     }
   }
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'triggered': return 'bg-red-100 text-red-800'
-      case 'confirmed': return 'bg-orange-100 text-orange-800'
-      case 'classified': return 'bg-blue-100 text-blue-800'
-      case 'contained': return 'bg-purple-100 text-purple-800'
-      case 'recovered': return 'bg-green-100 text-green-800'
-      case 'closed': return 'bg-slate-100 text-slate-800'
-      default: return 'bg-slate-100 text-slate-800'
+      case 'triggered': return 'bg-red-500/30 text-red-200'
+      case 'confirmed': return 'bg-orange-500/30 text-orange-200'
+      case 'classified': return 'bg-blue-500/30 text-blue-200'
+      case 'contained': return 'bg-purple-500/30 text-purple-200'
+      case 'recovered': return 'bg-green-500/30 text-green-200'
+      case 'closed': return 'bg-slate-500/30 text-slate-200'
+      default: return 'bg-slate-500/30 text-slate-200'
+    }
+  }
+
+  const getSeverityIcon = (severity: string) => {
+    switch (severity) {
+      case 'critical': return <AlertTriangle className="h-5 w-5 text-red-400" />
+      case 'high': return <AlertTriangle className="h-5 w-5 text-orange-400" />
+      case 'medium': return <AlertTriangle className="h-5 w-5 text-yellow-400" />
+      case 'low': return <AlertTriangle className="h-5 w-5 text-green-400" />
+      default: return <AlertTriangle className="h-5 w-5 text-slate-400" />
     }
   }
 
@@ -92,53 +109,23 @@ export default function IncidentsPage() {
   }, {} as Record<string, number>)
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Navigation */}
-      <nav className="bg-white border-b border-slate-200 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Shield className="h-8 w-8 text-blue-600" />
-            <div>
-              <h1 className="text-xl font-semibold text-slate-900">Identity Sentinel</h1>
-              <p className="text-sm text-slate-500">Account Compromise Decision Coach</p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-6">
-            <Link
-              href="/"
-              className="flex items-center space-x-2 text-slate-600 hover:text-slate-900 transition-colors"
-            >
-              Dashboard
-            </Link>
-            <Link
-              href="/incidents"
-              className="flex items-center space-x-2 text-slate-900 font-medium"
-            >
-              All Incidents
-            </Link>
-            <Link
-              href="/reports"
-              className="flex items-center space-x-2 text-slate-600 hover:text-slate-900 transition-colors"
-            >
-              Reports
-            </Link>
-          </div>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-background">
+      <Navbar subtitle="Security Monitoring - Incident Management" />
 
       <main className="container mx-auto px-6 py-8">
-        <div className="space-y-6">
+        <div className="space-y-8">
+          {/* Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Button variant="outline" size="sm" asChild>
+              <Button variant="outline" size="sm" asChild className="border-primary/40 hover:bg-primary/20 text-foreground">
                 <Link href="/">
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back to Dashboard
                 </Link>
               </Button>
               <div>
-                <h1 className="text-3xl font-bold text-slate-900">All Incidents</h1>
-                <p className="text-slate-600 mt-1">
+                <h1 className="text-3xl font-bold text-foreground">Security Incident Database</h1>
+                <p className="text-muted-foreground mt-1">
                   {filteredIncidents.length} of {incidents.length} incidents
                   {searchTerm || severityFilter !== 'all' || statusFilter !== 'all' ? ' (filtered)' : ''}
                 </p>
@@ -146,54 +133,95 @@ export default function IncidentsPage() {
             </div>
           </div>
 
-          {/* Statistics Cards */}
+          {/* Statistics Overview */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             {Object.entries(severityStats).map(([severity, count]) => (
-              <Card key={severity}>
-                <CardContent className="p-4">
+              <Card key={severity} className="bg-card/60 border-border/50 backdrop-blur-sm metric-card">
+                <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium capitalize">{severity}</p>
-                      <p className="text-2xl font-bold">{count}</p>
+                      <p className="text-sm text-muted-foreground capitalize">{severity}</p>
+                      <p className="text-3xl font-bold text-foreground">{count}</p>
                     </div>
-                    <AlertTriangle className={`h-5 w-5 ${
-                      severity === 'critical' ? 'text-red-600' :
-                      severity === 'high' ? 'text-orange-600' :
-                      severity === 'medium' ? 'text-yellow-600' :
-                      'text-green-600'
-                    }`} />
+                    {getSeverityIcon(severity)}
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
 
+          {/* Quick Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="bg-card/60 border-border/50 backdrop-blur-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total Incidents</p>
+                    <p className="text-2xl font-bold text-foreground">{incidents.length}</p>
+                  </div>
+                  <Activity className="h-8 w-8 text-primary" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card/60 border-border/50 backdrop-blur-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Active Investigations</p>
+                    <p className="text-2xl font-bold text-orange-400">
+                      {incidents.filter(i => !['closed', 'recovered'].includes(i.status)).length}
+                    </p>
+                  </div>
+                  <Eye className="h-8 w-8 text-orange-400" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card/60 border-border/50 backdrop-blur-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Resolved Cases</p>
+                    <p className="text-2xl font-bold text-green-400">
+                      {incidents.filter(i => ['closed', 'recovered'].includes(i.status)).length}
+                    </p>
+                  </div>
+                  <Clock className="h-8 w-8 text-green-400" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           {/* Filters */}
-          <Card>
+          <Card className="bg-card/60 border-border/50 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <Filter className="h-5 w-5 mr-2" />
-                Filters
+              <CardTitle className="flex items-center text-foreground">
+                <Filter className="h-5 w-5 mr-2 text-primary" />
+                Advanced Filtering
               </CardTitle>
+              <CardDescription className="text-muted-foreground">
+                Search and filter incidents by type, severity, and status
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex-1">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                      placeholder="Search incidents..."
+                      placeholder="Search incidents by type or ID..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
+                      className="pl-10 bg-muted/50 border-border/50 text-foreground placeholder:text-muted-foreground"
                     />
                   </div>
                 </div>
                 <Select value={severityFilter} onValueChange={setSeverityFilter}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-[180px] bg-muted/50 border-border/50 text-foreground">
                     <SelectValue placeholder="Severity" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-card border-border">
                     <SelectItem value="all">All Severities</SelectItem>
                     <SelectItem value="critical">Critical</SelectItem>
                     <SelectItem value="high">High</SelectItem>
@@ -202,10 +230,10 @@ export default function IncidentsPage() {
                   </SelectContent>
                 </Select>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-[180px] bg-muted/50 border-border/50 text-foreground">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-card border-border">
                     <SelectItem value="all">All Statuses</SelectItem>
                     <SelectItem value="triggered">Triggered</SelectItem>
                     <SelectItem value="confirmed">Confirmed</SelectItem>
@@ -220,35 +248,56 @@ export default function IncidentsPage() {
           </Card>
 
           {/* Incidents List */}
-          <Card>
+          <Card className="bg-card/60 border-border/50 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle>Incidents {startIndex + 1}-{Math.min(endIndex, filteredIncidents.length)} of {filteredIncidents.length}</CardTitle>
+              <CardTitle className="text-foreground">
+                Incident Records {startIndex + 1}-{Math.min(endIndex, filteredIncidents.length)} of {filteredIncidents.length}
+              </CardTitle>
+              <CardDescription className="text-muted-foreground">
+                Complete investigation history and case details
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {loading ? (
-                  <div className="text-center py-8">
-                    <p className="text-slate-500">Loading incidents...</p>
+                  <div className="text-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                    <p className="text-muted-foreground">Loading incident database...</p>
                   </div>
                 ) : currentIncidents.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-slate-500">No incidents found matching your criteria.</p>
+                  <div className="text-center py-12">
+                    <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">No incidents found matching your criteria.</p>
+                    <p className="text-sm text-muted-foreground mt-2">Try adjusting your filters or search terms.</p>
                   </div>
                 ) : (
                   currentIncidents.map((incident) => (
                     <div
                       key={incident.id}
-                      className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                      className="flex items-center justify-between p-4 border border-border/50 rounded-lg hover:bg-muted/30 transition-all duration-200 backdrop-blur-sm group"
                     >
                       <div className="flex-1">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <h3 className="font-medium text-slate-900">{incident.type}</h3>
-                            <p className="text-sm text-slate-500 mt-1">ID: {incident.id}</p>
-                            <div className="flex items-center space-x-4 mt-2 text-xs text-slate-400">
-                              <span>Created: {incident.createdAt}</span>
-                              <span>Updated: {incident.updatedAt}</span>
-                              <span>By: {incident.createdBy}</span>
+                            <div className="flex items-center space-x-3 mb-2">
+                              <div className="w-2 h-8 bg-primary rounded-full pulse-glow"></div>
+                              <div>
+                                <h3 className="font-medium text-foreground group-hover:text-primary transition-colors">
+                                  {incident.type}
+                                </h3>
+                                <p className="text-sm text-muted-foreground">ID: {incident.id.slice(-8)}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-4 text-xs text-muted-foreground ml-5">
+                              <div className="flex items-center space-x-1">
+                                <Clock className="h-3 w-3" />
+                                <span>Created: {incident.createdAt}</span>
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                <Activity className="h-3 w-3" />
+                                <span>Updated: {incident.updatedAt}</span>
+                              </div>
+                              <span>Analyst: {incident.createdBy}</span>
                             </div>
                           </div>
                           <div className="flex items-center space-x-3 ml-4">
@@ -258,9 +307,15 @@ export default function IncidentsPage() {
                             <Badge className={getStatusColor(incident.status)}>
                               {incident.status}
                             </Badge>
-                            <Button variant="outline" size="sm" asChild>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              asChild 
+                              className="border-primary/40 hover:bg-primary/20 text-foreground group-hover:border-primary/60"
+                            >
                               <Link href={`/incident/${incident.id}`}>
-                                View
+                                <Eye className="h-4 w-4 mr-1" />
+                                Investigate
                               </Link>
                             </Button>
                           </div>
@@ -273,8 +328,8 @@ export default function IncidentsPage() {
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between mt-6">
-                  <p className="text-sm text-slate-600">
+                <div className="flex items-center justify-between mt-8 pt-6 border-t border-border/50">
+                  <p className="text-sm text-muted-foreground">
                     Showing {startIndex + 1} to {Math.min(endIndex, filteredIncidents.length)} of {filteredIncidents.length} results
                   </p>
                   <div className="flex items-center space-x-2">
@@ -283,6 +338,7 @@ export default function IncidentsPage() {
                       size="sm"
                       onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                       disabled={currentPage === 1}
+                      className="border-primary/40 hover:bg-primary/20 text-foreground"
                     >
                       Previous
                     </Button>
@@ -296,6 +352,10 @@ export default function IncidentsPage() {
                             variant={pageNum === currentPage ? "default" : "outline"}
                             size="sm"
                             onClick={() => setCurrentPage(pageNum)}
+                            className={pageNum === currentPage 
+                              ? "bg-primary hover:bg-primary/90" 
+                              : "border-primary/40 hover:bg-primary/20 text-foreground"
+                            }
                           >
                             {pageNum}
                           </Button>
@@ -303,11 +363,12 @@ export default function IncidentsPage() {
                       })}
                       {totalPages > 5 && currentPage <= totalPages - 3 && (
                         <>
-                          <span className="px-2">...</span>
+                          <span className="px-2 text-muted-foreground">...</span>
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => setCurrentPage(totalPages)}
+                            className="border-primary/40 hover:bg-primary/20 text-foreground"
                           >
                             {totalPages}
                           </Button>
@@ -319,6 +380,7 @@ export default function IncidentsPage() {
                       size="sm"
                       onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                       disabled={currentPage === totalPages}
+                      className="border-primary/40 hover:bg-primary/20 text-foreground"
                     >
                       Next
                     </Button>

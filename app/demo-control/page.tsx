@@ -15,6 +15,7 @@ import {
   Clock,
   Monitor
 } from 'lucide-react'
+import { Navbar } from '@/components/ui/navbar'
 import Link from 'next/link'
 
 interface ActivityItem {
@@ -47,10 +48,8 @@ export default function DemoControlPage() {
   const [isResetting, setIsResetting] = useState(false)
 
   useEffect(() => {
-    // Load initial data and set up polling
     loadDemoStatistics()
-    const interval = setInterval(loadDemoStatistics, 2000) // Update every 2 seconds
-
+    const interval = setInterval(loadDemoStatistics, 2000)
     return () => clearInterval(interval)
   }, [])
 
@@ -76,7 +75,6 @@ export default function DemoControlPage() {
     try {
       const response = await fetch('/api/demo/reset', { method: 'POST' })
       if (response.ok) {
-        // Reset UI state
         setRecentActivity([])
         setParticipants(0)
         setStatistics({
@@ -99,254 +97,163 @@ export default function DemoControlPage() {
     }
   }
 
-  const simulateAttack = async (type: string) => {
+  const simulateAttack = async () => {
     try {
-      const response = await fetch('/api/demo/simulate-attack', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type })
-      })
-      
+      const response = await fetch('/api/demo/simulate-attack', { method: 'POST' })
       if (response.ok) {
-        alert(`${type} attack simulation triggered!`)
-        loadDemoStatistics() // Refresh data
-      } else {
-        alert('Failed to trigger attack simulation')
+        loadDemoStatistics()
       }
     } catch (error) {
-      console.error('Attack simulation failed:', error)
-      alert('Failed to trigger attack simulation')
-    }
-  }
-
-  const formatTimestamp = (timestamp: Date) => {
-    return timestamp.toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      second: '2-digit'
-    })
-  }
-
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case 'login_attempt': return <Activity className="h-4 w-4 text-blue-600" />
-      case 'account_locked': return <AlertTriangle className="h-4 w-4 text-orange-600" />
-      case 'incident_created': return <Shield className="h-4 w-4 text-red-600" />
-      default: return <Monitor className="h-4 w-4 text-gray-600" />
-    }
-  }
-
-  const getActivityColor = (type: string) => {
-    switch (type) {
-      case 'login_attempt': return 'border-l-blue-500'
-      case 'account_locked': return 'border-l-orange-500'
-      case 'incident_created': return 'border-l-red-500'
-      default: return 'border-l-gray-500'
+      console.error('Failed to simulate attack:', error)
     }
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Navigation */}
-      <nav className="bg-white border-b border-slate-200 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Shield className="h-8 w-8 text-blue-600" />
-            <div>
-              <h1 className="text-xl font-semibold text-slate-900">Identity Sentinel</h1>
-              <p className="text-sm text-slate-500">Demo Control Center</p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-6">
-            <Link 
-              href="/" 
-              className="flex items-center space-x-2 text-slate-600 hover:text-slate-900 transition-colors"
-            >
-              Dashboard
-            </Link>
-            <Link 
-              href="/reports" 
-              className="flex items-center space-x-2 text-slate-600 hover:text-slate-900 transition-colors"
-            >
-              Reports
-            </Link>
-          </div>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-background">
+      <Navbar subtitle="Security Monitoring - Demo Control Center" />
 
       <main className="container mx-auto px-6 py-8">
         <div className="space-y-8">
+          {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-slate-900">Demo Control Center</h1>
-              <p className="text-slate-600 mt-1">Manage interactive security demonstration</p>
+              <h1 className="text-3xl font-bold text-foreground">Demo Control Center</h1>
+              <p className="text-muted-foreground mt-1">Monitor and control live demonstration environment</p>
             </div>
-            <Badge variant="outline" className="text-lg px-4 py-2">
-              <Users className="h-4 w-4 mr-2" />
-              {participants} Active Participants
-            </Badge>
+            <div className="flex space-x-3">
+              <Button 
+                onClick={simulateAttack}
+                className="bg-primary hover:bg-primary/90"
+              >
+                <Activity className="h-4 w-4 mr-2" />
+                Simulate Attack
+              </Button>
+              <Button 
+                onClick={resetDemo}
+                disabled={isResetting}
+                variant="outline"
+                className="border-red-400/40 hover:bg-red-500/20 text-foreground"
+              >
+                {isResetting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                    Resetting...
+                  </>
+                ) : (
+                  <>
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Reset Demo
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
 
-          {/* Statistics Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Login Attempts</CardTitle>
-                <Activity className="h-4 w-4 text-blue-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{statistics.totalAttempts}</div>
-                <p className="text-xs text-slate-600">Last 5 minutes</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Locked Accounts</CardTitle>
-                <AlertTriangle className="h-4 w-4 text-orange-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{statistics.lockedAccounts}</div>
-                <p className="text-xs text-slate-600">Security responses active</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Active Incidents</CardTitle>
-                <Shield className="h-4 w-4 text-red-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{statistics.activeIncidents}</div>
-                <p className="text-xs text-slate-600">Security investigations</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Unique IPs</CardTitle>
-                <Monitor className="h-4 w-4 text-purple-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{statistics.uniqueIPs}</div>
-                <p className="text-xs text-slate-600">Attack sources detected</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Control Panel */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <RotateCcw className="h-5 w-5 mr-2" />
-                  Demo Controls
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Button 
-                  onClick={resetDemo} 
-                  variant="destructive" 
-                  className="w-full"
-                  disabled={isResetting}
-                >
-                  <RotateCcw className="h-4 w-4 mr-2" />
-                  {isResetting ? 'Resetting...' : 'Reset Demo Environment'}
-                </Button>
-                
-                <div className="pt-4 border-t">
-                  <h3 className="font-medium mb-3">Attack Simulations</h3>
-                  <div className="grid grid-cols-1 gap-2">
-                    <Button 
-                      onClick={() => simulateAttack('password_spray')}
-                      variant="outline"
-                      size="sm"
-                    >
-                      Simulate Password Spray Attack
-                    </Button>
-                    <Button 
-                      onClick={() => simulateAttack('brute_force')}
-                      variant="outline"
-                      size="sm"
-                    >
-                      Simulate Brute Force Attack
-                    </Button>
-                    <Button 
-                      onClick={() => simulateAttack('credential_stuffing')}
-                      variant="outline"
-                      size="sm"
-                    >
-                      Simulate Credential Stuffing
-                    </Button>
+          {/* Statistics Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card className="bg-card/60 border-border/50 backdrop-blur-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Active Participants</p>
+                    <p className="text-3xl font-bold text-cyan-400">{participants}</p>
                   </div>
-                </div>
-
-                <div className="pt-4 border-t">
-                  <h3 className="font-medium mb-3">Quick Access</h3>
-                  <div className="space-y-2">
-                    <Link href="/login" target="_blank">
-                      <Button variant="outline" size="sm" className="w-full">
-                        <ExternalLink className="h-4 w-4 mr-2" />
-                        Open Login Page
-                      </Button>
-                    </Link>
-                    <Link href="/demo-lobby" target="_blank">
-                      <Button variant="outline" size="sm" className="w-full">
-                        <QrCode className="h-4 w-4 mr-2" />
-                        Show QR Code Page
-                      </Button>
-                    </Link>
-                    <Link href="/" target="_blank">
-                      <Button variant="outline" size="sm" className="w-full">
-                        <Shield className="h-4 w-4 mr-2" />
-                        Identity Sentinel Dashboard
-                      </Button>
-                    </Link>
-                  </div>
+                  <Users className="h-8 w-8 text-cyan-400" />
                 </div>
               </CardContent>
             </Card>
 
-            {/* Activity Monitor */}
-            <Card>
+            <Card className="bg-card/60 border-border/50 backdrop-blur-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Login Attempts</p>
+                    <p className="text-3xl font-bold text-orange-400">{statistics.totalAttempts}</p>
+                  </div>
+                  <Activity className="h-8 w-8 text-orange-400" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card/60 border-border/50 backdrop-blur-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Locked Accounts</p>
+                    <p className="text-3xl font-bold text-red-400">{statistics.lockedAccounts}</p>
+                  </div>
+                  <AlertTriangle className="h-8 w-8 text-red-400" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card/60 border-border/50 backdrop-blur-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Active Incidents</p>
+                    <p className="text-3xl font-bold text-primary">{statistics.activeIncidents}</p>
+                  </div>
+                  <Shield className="h-8 w-8 text-primary" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Live Activity Feed */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="bg-card/60 border-border/50 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Activity className="h-5 w-5 mr-2" />
-                  Live Activity Feed
+                <CardTitle className="flex items-center space-x-2 text-foreground">
+                  <Monitor className="h-5 w-5" />
+                  <span>Live Activity Feed</span>
+                  <Badge className="bg-green-500/30 text-green-200 ml-auto">Live</Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3 max-h-96 overflow-y-auto">
                   {recentActivity.length === 0 ? (
-                    <div className="text-center py-8">
-                      <Activity className="h-12 w-12 mx-auto text-slate-400 mb-4" />
-                      <p className="text-slate-500">No activity yet</p>
-                      <p className="text-sm text-slate-400">Waiting for participants to interact with the login page</p>
-                    </div>
+                    <p className="text-muted-foreground text-center py-8">No recent activity</p>
                   ) : (
                     recentActivity.map((activity, index) => (
-                      <div 
-                        key={index}
-                        className={`flex items-start space-x-3 p-3 border-l-4 bg-slate-50 rounded-r ${getActivityColor(activity.type)}`}
-                      >
-                        <div className="flex-shrink-0 mt-0.5">
-                          {getActivityIcon(activity.type)}
-                        </div>
-                        <div className="flex-1 min-w-0">
+                      <div key={index} className="flex items-start space-x-3 p-3 bg-muted/30 rounded-lg border border-border/50">
+                        <div className="w-2 h-2 bg-primary rounded-full mt-2 pulse-glow"></div>
+                        <div className="flex-1">
                           <div className="flex items-center justify-between">
-                            <p className="text-sm font-medium text-slate-900 truncate">
-                              {activity.email}
-                            </p>
-                            <span className="text-xs text-slate-500 flex items-center">
-                              <Clock className="h-3 w-3 mr-1" />
-                              {formatTimestamp(activity.timestamp)}
+                            <span className="text-sm font-medium text-foreground">
+                              {activity.type.replace('_', ' ').toUpperCase()}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {activity.timestamp.toLocaleTimeString()}
                             </span>
                           </div>
-                          <p className="text-xs text-slate-600 mt-1">
-                            {activity.type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                            {activity.details && `: ${activity.details}`}
-                          </p>
+                          <p className="text-sm text-muted-foreground">{activity.email}</p>
+                          {activity.details && (
+                            <p className="text-xs text-muted-foreground mt-1">{activity.details}</p>
+                          )}
                         </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card/60 border-border/50 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="text-foreground">Attack Patterns</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {Object.entries(statistics.patterns).length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">No patterns detected</p>
+                  ) : (
+                    Object.entries(statistics.patterns).map(([pattern, count]) => (
+                      <div key={pattern} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border/50">
+                        <span className="capitalize text-foreground">{pattern.replace('_', ' ')}</span>
+                        <Badge className="bg-primary/30 text-primary-foreground">
+                          {count} attempts
+                        </Badge>
                       </div>
                     ))
                   )}
@@ -355,26 +262,47 @@ export default function DemoControlPage() {
             </Card>
           </div>
 
-          {/* Attack Patterns */}
-          {Object.keys(statistics.patterns).length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Detected Attack Patterns</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {Object.entries(statistics.patterns).map(([pattern, count]) => (
-                    <div key={pattern} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                      <span className="text-sm font-medium capitalize">
-                        {pattern.replace('_', ' ')}
-                      </span>
-                      <Badge variant="secondary">{count}</Badge>
-                    </div>
-                  ))}
+          {/* Quick Actions */}
+          <Card className="border-primary/40 bg-primary/10 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="text-primary">Demo Controls</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <h4 className="font-medium text-foreground mb-2">Participant Access</h4>
+                  <p className="text-sm text-muted-foreground mb-3">Share the demo lobby URL with participants</p>
+                  <Button variant="outline" asChild className="border-primary/40 hover:bg-primary/20 text-foreground">
+                    <Link href="/demo-lobby">
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Open Demo Lobby
+                    </Link>
+                  </Button>
                 </div>
-              </CardContent>
-            </Card>
-          )}
+                <div>
+                  <h4 className="font-medium text-foreground mb-2">Attack Simulation</h4>
+                  <p className="text-sm text-muted-foreground mb-3">Trigger realistic attack scenarios</p>
+                  <Button onClick={simulateAttack} className="bg-primary hover:bg-primary/90">
+                    <Activity className="h-4 w-4 mr-2" />
+                    Launch Attack
+                  </Button>
+                </div>
+                <div>
+                  <h4 className="font-medium text-foreground mb-2">Environment Reset</h4>
+                  <p className="text-sm text-muted-foreground mb-3">Clear all demo data and restart</p>
+                  <Button 
+                    onClick={resetDemo}
+                    disabled={isResetting}
+                    variant="outline"
+                    className="border-red-400/40 hover:bg-red-500/20 text-foreground"
+                  >
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Reset Demo
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </main>
     </div>
