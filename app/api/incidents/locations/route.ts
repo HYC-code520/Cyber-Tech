@@ -141,23 +141,26 @@ export async function GET(request: NextRequest) {
     // Filter out null values and return
     const validLocations = incidentLocations.filter(loc => loc !== null)
 
-    // Add some mock data if there are no real incidents
-    if (validLocations.length === 0) {
-      const mockIncidents = await generateMockIncidents()
-      return NextResponse.json({
-        success: true,
-        incidents: mockIncidents,
-        total: mockIncidents.length,
-        timeRange: `${hours} hours`,
-        mock: true
-      })
+    // Always generate consistent mock incidents based on time range
+    let allMockIncidents = await generateMockIncidents(hours)
+
+    // Apply severity filter to mock incidents if specified
+    if (severity && severity !== 'all') {
+      allMockIncidents = allMockIncidents.filter(inc => inc.severity === severity)
     }
+
+    // Combine real incidents with mock incidents
+    // For "all" severity, show all available incidents. For specific severities, show filtered incidents
+    const combinedIncidents = validLocations.length > 0
+      ? [...validLocations, ...allMockIncidents]
+      : allMockIncidents
 
     return NextResponse.json({
       success: true,
-      incidents: validLocations,
-      total: validLocations.length,
-      timeRange: `${hours} hours`
+      incidents: combinedIncidents,
+      total: combinedIncidents.length,
+      timeRange: `${hours} hours`,
+      mock: validLocations.length === 0
     })
 
   } catch (error) {
@@ -169,50 +172,67 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Generate mock incidents for demo purposes
-async function generateMockIncidents() {
-  const mockIPs = [
-    '185.220.101.45', // TOR exit node
-    '91.219.237.113', // Russia
-    '202.182.103.200', // China
-    '175.45.176.220', // North Korea
-    '104.248.169.177', // VPN Germany
-    '159.65.233.12', // VPN Singapore
-    '195.154.179.8', // Russia
-    '210.89.42.16', // China
-    '138.68.105.77', // VPN US
-    '34.102.136.180', // US legitimate
+// Generate mock incidents for demo purposes - consistent based on time
+async function generateMockIncidents(hours: number = 24) {
+  // Define incidents with specific timestamps
+  const incidentDefinitions = [
+    // Most recent incidents (last hour) - 6 incidents
+    { ip: '185.220.101.45', hoursAgo: 0.2, severity: 'critical', type: 'password_spray_attack' },
+    { ip: '91.219.237.113', hoursAgo: 0.3, severity: 'high', type: 'brute_force_attack' },
+    { ip: '202.182.103.200', hoursAgo: 0.5, severity: 'high', type: 'credential_stuffing' },
+    { ip: '175.45.176.220', hoursAgo: 0.6, severity: 'critical', type: 'suspicious_login_activity' },
+    { ip: '89.185.45.234', hoursAgo: 0.8, severity: 'medium', type: 'mfa_fatigue_attack' },
+    { ip: '162.243.175.89', hoursAgo: 0.9, severity: 'high', type: 'password_spray_attack' },
+
+    // 1-6 hours ago - 8 more incidents
+    { ip: '104.248.169.177', hoursAgo: 1.5, severity: 'medium', type: 'mfa_fatigue_attack' },
+    { ip: '159.65.233.12', hoursAgo: 2.1, severity: 'high', type: 'suspicious_login_activity' },
+    { ip: '195.154.179.8', hoursAgo: 2.8, severity: 'critical', type: 'password_spray_attack' },
+    { ip: '210.89.42.16', hoursAgo: 3.2, severity: 'medium', type: 'credential_stuffing' },
+    { ip: '46.101.127.145', hoursAgo: 3.7, severity: 'high', type: 'brute_force_attack' },
+    { ip: '178.62.195.209', hoursAgo: 4.3, severity: 'low', type: 'suspicious_login_activity' },
+    { ip: '167.99.234.110', hoursAgo: 4.9, severity: 'medium', type: 'mfa_fatigue_attack' },
+    { ip: '134.209.82.15', hoursAgo: 5.6, severity: 'high', type: 'credential_stuffing' },
+
+    // 6-24 hours ago - 10 more incidents
+    { ip: '138.68.105.77', hoursAgo: 7.1, severity: 'high', type: 'brute_force_attack' },
+    { ip: '34.102.136.180', hoursAgo: 8.5, severity: 'medium', type: 'suspicious_login_activity' },
+    { ip: '45.142.120.88', hoursAgo: 10.2, severity: 'critical', type: 'password_spray_attack' },
+    { ip: '103.214.110.77', hoursAgo: 12.1, severity: 'high', type: 'credential_stuffing' },
+    { ip: '192.241.218.92', hoursAgo: 14.3, severity: 'medium', type: 'brute_force_attack' },
+    { ip: '165.227.103.49', hoursAgo: 16.7, severity: 'low', type: 'suspicious_login_activity' },
+    { ip: '157.230.218.102', hoursAgo: 18.2, severity: 'high', type: 'mfa_fatigue_attack' },
+    { ip: '142.93.179.112', hoursAgo: 19.8, severity: 'critical', type: 'password_spray_attack' },
+    { ip: '68.183.92.208', hoursAgo: 21.4, severity: 'medium', type: 'credential_stuffing' },
+    { ip: '161.35.229.105', hoursAgo: 23.1, severity: 'high', type: 'brute_force_attack' },
+
+    // Beyond 24 hours - 4 more incidents
+    { ip: '41.210.145.200', hoursAgo: 26.5, severity: 'low', type: 'suspicious_login_activity' },
+    { ip: '177.234.145.90', hoursAgo: 30.2, severity: 'medium', type: 'mfa_fatigue_attack' },
+    { ip: '203.189.234.77', hoursAgo: 36.8, severity: 'high', type: 'password_spray_attack' },
+    { ip: '117.213.89.243', hoursAgo: 42.3, severity: 'critical', type: 'credential_stuffing' },
   ]
 
-  const types = [
-    'password_spray_attack',
-    'mfa_fatigue_attack',
-    'credential_stuffing',
-    'brute_force_attack',
-    'suspicious_login_activity'
-  ]
-
-  const severities: ('critical' | 'high' | 'medium' | 'low')[] = [
-    'critical', 'high', 'high', 'medium', 'medium', 'medium', 'low', 'low'
-  ]
+  // Filter incidents based on the time range requested
+  const relevantIncidents = incidentDefinitions.filter(def => def.hoursAgo <= hours)
 
   const mockIncidents = await Promise.all(
-    mockIPs.slice(0, 8).map(async (ip, index) => {
-      const geoData = await ipLocator.lookup(ip)
+    relevantIncidents.map(async (def, index) => {
+      const geoData = await ipLocator.lookup(def.ip)
 
       if (!geoData) return null
 
       return {
-        id: `mock-${index}`,
-        type: types[Math.floor(Math.random() * types.length)],
-        severity: severities[Math.floor(Math.random() * severities.length)],
+        id: `mock-${def.ip}-${def.hoursAgo}`,
+        type: def.type,
+        severity: def.severity as 'critical' | 'high' | 'medium' | 'low',
         latitude: geoData.latitude,
         longitude: geoData.longitude,
         country: geoData.country,
         city: geoData.city,
         ipAddress: geoData.ipAddress,
-        timestamp: new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000),
-        failedAttempts: Math.floor(Math.random() * 50) + 5,
+        timestamp: new Date(Date.now() - def.hoursAgo * 60 * 60 * 1000),
+        failedAttempts: Math.floor(Math.random() * 30) + 10,
         threatScore: geoData.threatScore,
         isTOR: geoData.isTOR,
         isVPN: geoData.isVPN
