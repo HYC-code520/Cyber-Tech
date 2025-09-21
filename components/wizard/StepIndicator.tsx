@@ -19,10 +19,10 @@ export function StepIndicator({ steps, currentStep, className }: StepIndicatorPr
               className={cn(
                 "flex h-10 w-10 items-center justify-center rounded-full border-2 transition-colors",
                 index < currentStep
-                  ? "border-green-500 bg-green-500 text-white"
+                  ? "border-green-400 bg-green-500 text-white"
                   : index === currentStep
-                  ? "border-blue-500 bg-blue-500 text-white"
-                  : "border-slate-300 bg-white text-slate-400"
+                  ? "border-primary bg-primary text-white"
+                  : "border-muted-foreground/40 bg-muted/20 text-muted-foreground"
               )}
             >
               {index < currentStep ? (
@@ -35,7 +35,11 @@ export function StepIndicator({ steps, currentStep, className }: StepIndicatorPr
               <span
                 className={cn(
                   "text-sm font-medium capitalize",
-                  index <= currentStep ? "text-slate-900" : "text-slate-500"
+                  index < currentStep 
+                    ? "text-green-300" 
+                    : index === currentStep 
+                    ? "text-primary-foreground" 
+                    : "text-muted-foreground"
                 )}
               >
                 {step}
@@ -46,7 +50,7 @@ export function StepIndicator({ steps, currentStep, className }: StepIndicatorPr
             <div
               className={cn(
                 "mx-4 h-0.5 w-16 transition-colors",
-                index < currentStep ? "bg-green-500" : "bg-slate-300"
+                index < currentStep ? "bg-green-400" : "bg-muted-foreground/30"
               )}
             />
           )}
