@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { StepIndicator } from '@/components/wizard/StepIndicator'
 import { AIEnhancedRecommendationPane } from '@/components/recommendations/AIEnhancedRecommendationPane'
-import { ChevronLeft, ChevronRight, User, UserCheck, AlertTriangle, Shield, RefreshCw, Home, FileText, Play, MonitorSpeaker, QrCode } from 'lucide-react'
+import { ChevronLeft, ChevronRight, User, UserCheck, AlertTriangle, Shield, RefreshCw, Home, FileText, Play, MonitorSpeaker, QrCode, GripVertical } from 'lucide-react'
 import Link from 'next/link'
 import { Navbar } from '@/components/ui/navbar'
 
@@ -54,6 +54,11 @@ export default function IncidentPage() {
   const [transitionLoading, setTransitionLoading] = useState(false)
   const [viewMode, setViewMode] = useState<'analyst' | 'manager'>('analyst')
   const [error, setError] = useState<string | null>(null)
+  
+  // Resizable panel state
+  const [recommendationPaneWidth, setRecommendationPaneWidth] = useState(400) // Default width in pixels
+  const [isResizing, setIsResizing] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   const steps = ['trigger', 'confirm', 'classify', 'contain', 'recover']
   const currentStepIndex = incident ? steps.indexOf(incident.currentStep) : 0
@@ -155,11 +160,14 @@ export default function IncidentPage() {
   }
 
   const transitionToPreviousStep = async () => {
-    if (!incident || currentStepIndex <= 0) return
+    if (!incident || currentStepIndex <= 0) {
+      console.log('Cannot go back: at first step or no incident')
+      return
+    }
 
     const previousStep = steps[currentStepIndex - 1]
     
-    console.log(`Transitioning back from ${incident.currentStep} to ${previousStep}`) // Debug log
+    console.log(`Transitioning back from ${incident.currentStep} to ${previousStep}`)
     
     setTransitionLoading(true)
     setError(null)
@@ -176,14 +184,17 @@ export default function IncidentPage() {
       })
 
       const responseData = await response.json()
-      console.log('Previous transition response:', response.status, responseData) // Debug log
+      console.log('Previous transition response:', response.status, responseData)
 
       if (response.ok) {
         await fetchIncident()
         console.log('Previous transition successful')
+        
+        // Optional: Show success feedback
+        setError(null)
       } else {
         console.error('Previous transition failed:', responseData)
-        setError(`Transition failed: ${responseData.error || 'Unknown error'}`)
+        setError(`Cannot go back: ${responseData.error || 'Unknown error'}`)
       }
     } catch (error) {
       console.error('Error transitioning step:', error)
@@ -391,6 +402,52 @@ export default function IncidentPage() {
     }
   }
 
+  // Resizing handlers
+  const startResize = (e: React.MouseEvent) => {
+    setIsResizing(true)
+    e.preventDefault()
+  }
+
+  const handleResize = (e: MouseEvent) => {
+    if (!isResizing || !containerRef.current) return
+    
+    const containerRect = containerRef.current.getBoundingClientRect()
+    const newWidth = containerRect.right - e.clientX
+    
+    // Set min and max width constraints
+    const minWidth = 300 // Minimum 300px
+    const maxWidth = containerRect.width * 0.7 // Maximum 70% of container
+    
+    const clampedWidth = Math.max(minWidth, Math.min(maxWidth, newWidth))
+    setRecommendationPaneWidth(clampedWidth)
+  }
+
+  const stopResize = () => {
+    setIsResizing(false)
+  }
+
+  // Add mouse event listeners for resizing
+  useEffect(() => {
+    if (isResizing) {
+      document.addEventListener('mousemove', handleResize)
+      document.addEventListener('mouseup', stopResize)
+      document.body.style.cursor = 'col-resize'
+      document.body.style.userSelect = 'none'
+    } else {
+      document.removeEventListener('mousemove', handleResize)
+      document.removeEventListener('mouseup', stopResize)
+      document.body.style.cursor = 'default'
+      document.body.style.userSelect = 'auto'
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleResize)
+      document.removeEventListener('mouseup', stopResize)
+      document.body.style.cursor = 'default'
+      document.body.style.userSelect = 'auto'
+    }
+  }, [isResizing])
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -430,11 +487,17 @@ export default function IncidentPage() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="flex h-screen">
-        {/* Main Content - 2/3 width */}
-        <div className="flex-1 flex flex-col bg-card/60 backdrop-blur-sm">
+      <div 
+        ref={containerRef}
+        className="flex h-[calc(100vh-4rem)] relative"
+      >
+        {/* Main Content - Dynamic width */}
+        <div 
+          className="flex flex-col bg-card/60 backdrop-blur-sm relative"
+          style={{ width: `calc(100% - ${recommendationPaneWidth}px)` }}
+        >
           {/* Header */}
-          <div className="border-b border-border/50 p-6">
+          <div className="border-b border-border/50 p-6 flex-shrink-0">
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h1 className="text-2xl font-bold text-foreground">
@@ -488,7 +551,7 @@ export default function IncidentPage() {
           </div>
 
           {/* Content */}
-          <div className="flex-1 p-6 overflow-y-auto">
+          <div className="flex-1 p-6 overflow-y-auto pb-24">
             <Tabs value={viewMode}>
               <TabsContent value="analyst" className="space-y-4">
                 {renderStepContent()}
@@ -545,40 +608,76 @@ export default function IncidentPage() {
             </Tabs>
           </div>
 
-          {/* Navigation */}
-          <div className="border-t border-border/50 p-6">
-            <div className="flex justify-between">
-              <Button 
-                variant="outline" 
-                onClick={transitionToPreviousStep}
-                disabled={currentStepIndex <= 0 || transitionLoading}
-                className="border-primary/40 hover:bg-primary/20 text-foreground"
-              >
-                <ChevronLeft className="h-4 w-4 mr-2" />
-                {transitionLoading ? 'Loading...' : 'Previous'}
-              </Button>
-              
-              <Button 
-                onClick={transitionToNextStep}
-                disabled={currentStepIndex >= steps.length - 1 || transitionLoading}
-                className="bg-primary hover:bg-primary/90"
-              >
-                {transitionLoading ? 'Loading...' : 'Next'}
-                <ChevronRight className="h-4 w-4 ml-2" />
-              </Button>
+          {/* Sticky Navigation - Always visible at bottom */}
+          <div className="absolute bottom-0 left-0 right-0 border-t border-border/50 bg-card/90 backdrop-blur-md p-6 flex justify-between items-center shadow-lg">
+            <Button 
+              variant="outline" 
+              onClick={transitionToPreviousStep}
+              disabled={currentStepIndex <= 0 || transitionLoading}
+              className="border-primary/40 hover:bg-primary/20 text-foreground disabled:opacity-50"
+              title={currentStepIndex <= 0 ? "Already at first step" : "Go to previous step"}
+            >
+              <ChevronLeft className="h-4 w-4 mr-2" />
+              {transitionLoading ? 'Loading...' : 'Previous'}
+            </Button>
+            
+            {/* Progress indicator in center */}
+            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+              <span>Step {currentStepIndex + 1} of {steps.length}</span>
+              <div className="w-24 h-2 bg-muted/30 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-primary transition-all duration-300 ease-out" 
+                  style={{ width: `${((currentStepIndex + 1) / steps.length) * 100}%` }}
+                />
+              </div>
             </div>
+            
+            <Button 
+              onClick={transitionToNextStep}
+              disabled={currentStepIndex >= steps.length - 1 || transitionLoading}
+              className="bg-primary hover:bg-primary/90 disabled:opacity-50"
+              title={currentStepIndex >= steps.length - 1 ? "Already at final step" : "Go to next step"}
+            >
+              {transitionLoading ? 'Loading...' : currentStepIndex >= steps.length - 1 ? 'Complete' : 'Next'}
+              <ChevronRight className="h-4 w-4 ml-2" />
+            </Button>
           </div>
         </div>
 
-        {/* Recommendations Pane - 1/3 width */}
-        <AIEnhancedRecommendationPane
-          recommendations={incident.recommendations}
-          currentStep={incident.currentStep}
-          incidentType={incident.type}
-          incidentSeverity={incident.severity}
-          onExecuteAction={executeAction}
-          isExecuting={executingAction}
-        />
+        {/* Resize Handle */}
+        <div
+          className={`w-1 bg-border/50 hover:bg-primary/50 cursor-col-resize flex items-center justify-center relative group ${
+            isResizing ? 'bg-primary/70' : ''
+          }`}
+          onMouseDown={startResize}
+        >
+          {/* Visual indicator */}
+          <div className="absolute inset-y-0 -inset-x-1 flex items-center justify-center">
+            <GripVertical className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+          </div>
+          
+          {/* Width indicator tooltip */}
+          {isResizing && (
+            <div className="absolute top-1/2 -translate-y-1/2 -left-16 bg-card border border-border rounded px-2 py-1 text-xs text-foreground shadow-lg">
+              {Math.round(recommendationPaneWidth)}px
+            </div>
+          )}
+        </div>
+
+        {/* Recommendations Pane - Resizable width */}
+        <div 
+          className="flex-shrink-0 bg-background border-l border-border/50"
+          style={{ width: `${recommendationPaneWidth}px` }}
+        >
+          <AIEnhancedRecommendationPane
+            recommendations={incident.recommendations}
+            currentStep={incident.currentStep}
+            incidentType={incident.type}
+            incidentSeverity={incident.severity}
+            onExecuteAction={executeAction}
+            isExecuting={executingAction}
+          />
+        </div>
       </div>
     </div>
   )

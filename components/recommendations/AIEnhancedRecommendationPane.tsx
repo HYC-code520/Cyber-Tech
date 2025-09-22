@@ -106,22 +106,22 @@ export function AIEnhancedRecommendationPane({
     }
   }
 
-  const getCategoryColor = (category: string) => {
+  const getCategoryBadgeVariant = (category: string) => {
     switch (category) {
-      case 'immediate': return 'bg-red-100 text-red-800 border-red-200'
-      case 'follow_up': return 'bg-orange-100 text-orange-800 border-orange-200'
-      case 'optional': return 'bg-blue-100 text-blue-800 border-blue-200'
-      default: return 'bg-slate-100 text-slate-800 border-slate-200'
+      case 'immediate': return 'destructive'
+      case 'follow_up': return 'secondary'
+      case 'optional': return 'outline'
+      default: return 'secondary'
     }
   }
 
   const getRiskLevelColor = (riskLevel?: string) => {
     switch (riskLevel) {
-      case 'critical': return 'text-red-600'
-      case 'high': return 'text-orange-600'
-      case 'medium': return 'text-yellow-600'
-      case 'low': return 'text-green-600'
-      default: return 'text-slate-600'
+      case 'critical': return 'text-destructive'
+      case 'high': return 'text-destructive/80'
+      case 'medium': return 'text-primary'
+      case 'low': return 'text-accent'
+      default: return 'text-muted-foreground'
     }
   }
 
@@ -154,7 +154,7 @@ export function AIEnhancedRecommendationPane({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
-            <Brain className="h-5 w-5 text-blue-600" />
+            <Brain className="h-5 w-5 text-primary" />
             <span>AI-Enhanced Recommendations</span>
           </CardTitle>
           <CardDescription>
@@ -163,8 +163,8 @@ export function AIEnhancedRecommendationPane({
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
-            <Brain className="h-8 w-8 text-slate-400 mx-auto mb-2" />
-            <p className="text-slate-500">
+            <Brain className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+            <p className="text-muted-foreground">
               {isEnhancing ? 'AI is analyzing the incident...' : 'No recommendations available for this incident type'}
             </p>
           </div>
@@ -174,15 +174,15 @@ export function AIEnhancedRecommendationPane({
   }
 
   return (
-    <Card className="h-full">
-      <CardHeader>
+    <Card className="h-full flex flex-col">
+      <CardHeader className="flex-shrink-0">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center space-x-2">
-            <Brain className="h-5 w-5 text-blue-600" />
+            <Brain className="h-5 w-5 text-primary" />
             <span>AI-Enhanced Recommendations</span>
             {isEnhancing && (
               <div className="animate-spin">
-                <Brain className="h-4 w-4 text-blue-500" />
+                <Brain className="h-4 w-4 text-primary/70" />
               </div>
             )}
           </CardTitle>
@@ -191,7 +191,7 @@ export function AIEnhancedRecommendationPane({
               variant="outline"
               size="sm"
               onClick={() => setAiEnabled(!aiEnabled)}
-              className={aiEnabled ? 'bg-blue-50 border-blue-200' : ''}
+              className={aiEnabled ? 'bg-primary/10 border-primary/30' : ''}
             >
               <Brain className="h-4 w-4 mr-1" />
               {aiEnabled ? 'AI On' : 'AI Off'}
@@ -205,9 +205,9 @@ export function AIEnhancedRecommendationPane({
           }
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <ScrollArea className="h-96">
-          <div className="space-y-4">
+      <CardContent className="flex-1 overflow-hidden">
+        <ScrollArea className="h-[calc(100vh-16rem)] min-h-[600px] max-h-[1000px]">
+          <div className="space-y-4 pr-4">
             {enhancedRecommendations.map((rec, index) => {
               const isExpanded = expandedRecs.has(rec.id || index.toString())
               const recId = rec.id || index.toString()
@@ -215,13 +215,13 @@ export function AIEnhancedRecommendationPane({
               return (
                 <div
                   key={recId}
-                  className="border rounded-lg p-4 hover:shadow-md transition-shadow"
+                  className="border border-border rounded-lg p-4 bg-card/50 hover:bg-card/80 transition-all duration-200"
                 >
                   {/* Header */}
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-1">
-                        <Badge className={getCategoryColor(rec.category)}>
+                        <Badge variant={getCategoryBadgeVariant(rec.category)}>
                           {rec.category}
                         </Badge>
                         {getPriorityIcon(rec.priority)}
@@ -236,16 +236,16 @@ export function AIEnhancedRecommendationPane({
                           </Badge>
                         )}
                       </div>
-                      <h4 className="font-medium text-slate-900 mb-1">
+                      <h4 className="font-medium text-foreground mb-1">
                         {rec.action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                       </h4>
-                      <p className="text-sm text-slate-600 mb-2">
+                      <p className="text-sm text-muted-foreground mb-2">
                         {rec.detailedExplanation || rec.reason}
                       </p>
                     </div>
                     <div className="flex items-center space-x-2 ml-4">
                       {rec.estimatedTime && (
-                        <div className="flex items-center text-xs text-slate-500">
+                        <div className="flex items-center text-xs text-muted-foreground">
                           <Clock className="h-3 w-3 mr-1" />
                           {rec.estimatedTime}
                         </div>
@@ -267,15 +267,15 @@ export function AIEnhancedRecommendationPane({
 
                   {/* Expanded Content */}
                   {isExpanded && (
-                    <div className="space-y-4 pt-3 border-t">
+                    <div className="space-y-4 pt-3 border-t border-border">
                       {/* Business Impact */}
                       {rec.businessImpact && (
                         <div>
                           <div className="flex items-center space-x-1 mb-2">
-                            <TrendingUp className="h-4 w-4 text-orange-600" />
-                            <span className="text-sm font-medium text-orange-800">Business Impact</span>
+                            <TrendingUp className="h-4 w-4 text-primary" />
+                            <span className="text-sm font-medium text-foreground">Business Impact</span>
                           </div>
-                          <p className="text-sm text-slate-600 pl-5">
+                          <p className="text-sm text-muted-foreground pl-5">
                             {rec.businessImpact}
                           </p>
                         </div>
@@ -285,13 +285,13 @@ export function AIEnhancedRecommendationPane({
                       {rec.contextFactors && rec.contextFactors.length > 0 && (
                         <div>
                           <div className="flex items-center space-x-1 mb-2">
-                            <Target className="h-4 w-4 text-blue-600" />
-                            <span className="text-sm font-medium text-blue-800">Context Factors</span>
+                            <Target className="h-4 w-4 text-accent" />
+                            <span className="text-sm font-medium text-foreground">Context Factors</span>
                           </div>
-                          <ul className="text-sm text-slate-600 pl-5 space-y-1">
+                          <ul className="text-sm text-muted-foreground pl-5 space-y-1">
                             {rec.contextFactors.map((factor, idx) => (
                               <li key={idx} className="flex items-start">
-                                <span className="text-blue-400 mr-2">•</span>
+                                <span className="text-accent mr-2">•</span>
                                 {factor}
                               </li>
                             ))}
@@ -303,13 +303,13 @@ export function AIEnhancedRecommendationPane({
                       {rec.implementationSteps && rec.implementationSteps.length > 0 && (
                         <div>
                           <div className="flex items-center space-x-1 mb-2">
-                            <CheckCircle2 className="h-4 w-4 text-green-600" />
-                            <span className="text-sm font-medium text-green-800">Implementation Steps</span>
+                            <CheckCircle2 className="h-4 w-4 text-primary" />
+                            <span className="text-sm font-medium text-foreground">Implementation Steps</span>
                           </div>
-                          <ol className="text-sm text-slate-600 pl-5 space-y-1">
+                          <ol className="text-sm text-muted-foreground pl-5 space-y-1">
                             {rec.implementationSteps.map((step, idx) => (
                               <li key={idx} className="flex items-start">
-                                <span className="text-green-600 mr-2 font-medium">{idx + 1}.</span>
+                                <span className="text-primary mr-2 font-medium">{idx + 1}.</span>
                                 {step.replace(/^\d+\.\s*/, '')}
                               </li>
                             ))}
@@ -321,13 +321,13 @@ export function AIEnhancedRecommendationPane({
                       {rec.alternatives && rec.alternatives.length > 0 && (
                         <div>
                           <div className="flex items-center space-x-1 mb-2">
-                            <Lightbulb className="h-4 w-4 text-yellow-600" />
-                            <span className="text-sm font-medium text-yellow-800">Alternative Approaches</span>
+                            <Lightbulb className="h-4 w-4 text-accent" />
+                            <span className="text-sm font-medium text-foreground">Alternative Approaches</span>
                           </div>
-                          <ul className="text-sm text-slate-600 pl-5 space-y-1">
+                          <ul className="text-sm text-muted-foreground pl-5 space-y-1">
                             {rec.alternatives.map((alt, idx) => (
                               <li key={idx} className="flex items-start">
-                                <span className="text-yellow-400 mr-2">•</span>
+                                <span className="text-accent mr-2">•</span>
                                 {alt}
                               </li>
                             ))}
@@ -338,15 +338,15 @@ export function AIEnhancedRecommendationPane({
                       {/* Citation */}
                       <div>
                         <div className="flex items-center space-x-1 mb-2">
-                          <Info className="h-4 w-4 text-slate-600" />
-                          <span className="text-sm font-medium text-slate-800">Citation</span>
+                          <Info className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm font-medium text-foreground">Citation</span>
                         </div>
                         <div className="pl-5">
                           <a
                             href={getCitationLink(rec.citation)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                            className="inline-flex items-center space-x-1 text-sm text-primary hover:text-primary/80 hover:underline"
                           >
                             <span>{rec.citation}</span>
                             <ExternalLink className="h-3 w-3" />

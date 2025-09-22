@@ -24,16 +24,25 @@ export interface StateTransition {
   to: IncidentState
   step?: IncidentStep
   requiredData?: string[]
+  isBackward?: boolean
 }
 
 export class IncidentStateMachine {
   private transitions: StateTransition[] = [
+    // Forward transitions
     { from: INCIDENT_STATES.TRIGGERED, to: INCIDENT_STATES.CONFIRMED, step: INCIDENT_STEPS.CONFIRM },
     { from: INCIDENT_STATES.CONFIRMED, to: INCIDENT_STATES.CLASSIFIED, step: INCIDENT_STEPS.CLASSIFY },
     { from: INCIDENT_STATES.CLASSIFIED, to: INCIDENT_STATES.CONTAINED, step: INCIDENT_STEPS.CONTAIN },
     { from: INCIDENT_STATES.CONTAINED, to: INCIDENT_STATES.RECOVERED, step: INCIDENT_STEPS.RECOVER },
     { from: INCIDENT_STATES.RECOVERED, to: INCIDENT_STATES.DOCUMENTED },
     { from: INCIDENT_STATES.DOCUMENTED, to: INCIDENT_STATES.CLOSED },
+    
+    // Backward transitions (for Previous button functionality)
+    { from: INCIDENT_STATES.CONFIRMED, to: INCIDENT_STATES.TRIGGERED, step: INCIDENT_STEPS.TRIGGER, isBackward: true },
+    { from: INCIDENT_STATES.CLASSIFIED, to: INCIDENT_STATES.CONFIRMED, step: INCIDENT_STEPS.CONFIRM, isBackward: true },
+    { from: INCIDENT_STATES.CONTAINED, to: INCIDENT_STATES.CLASSIFIED, step: INCIDENT_STEPS.CLASSIFY, isBackward: true },
+    { from: INCIDENT_STATES.RECOVERED, to: INCIDENT_STATES.CONTAINED, step: INCIDENT_STEPS.CONTAIN, isBackward: true },
+    
     // Allow closing from any state for false positives or emergency closure
     { from: INCIDENT_STATES.TRIGGERED, to: INCIDENT_STATES.CLOSED },
     { from: INCIDENT_STATES.CONFIRMED, to: INCIDENT_STATES.CLOSED },
@@ -127,6 +136,16 @@ export class IncidentStateMachine {
 
   isValidStep(step: string): step is IncidentStep {
     return Object.values(INCIDENT_STEPS).includes(step as IncidentStep)
+  }
+
+  // New helper method to check if backward transitions are allowed
+  canGoBack(currentStep: IncidentStep): boolean {
+    return this.getPreviousStep(currentStep) !== null
+  }
+
+  // New helper method to check if forward transitions are allowed
+  canGoForward(currentStep: IncidentStep): boolean {
+    return this.getNextStep(currentStep) !== null
   }
 }
 
