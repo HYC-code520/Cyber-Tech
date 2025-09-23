@@ -245,6 +245,36 @@ export const mockActions = {
       },
       timestamp: new Date().toISOString()
     }
+  },
+
+  // === FALLBACK ACTION FOR UNKNOWN TYPES ===
+  async fallback_action(actionType?: string): Promise<ActionResult> {
+    await sleep(500)
+    
+    return {
+      success: true,
+      message: `Generic security action executed: ${actionType || 'Unknown Action'}`,
+      details: {
+        action_type: actionType || 'unknown',
+        execution_method: 'simulated',
+        analyst_review: 'recommended',
+        follow_up_required: true
+      },
+      timestamp: new Date().toISOString()
+    }
+  }
+}
+
+// Helper function to execute any action, with fallback
+export async function executeAnyAction(actionType: string): Promise<ActionResult> {
+  console.log(`🎯 Attempting to execute action: ${actionType}`)
+  
+  if (actionType in mockActions) {
+    const executor = mockActions[actionType as ActionType]
+    return await executor()
+  } else {
+    console.warn(`⚠️ Action type "${actionType}" not found, using fallback`)
+    return await mockActions.fallback_action(actionType)
   }
 }
 

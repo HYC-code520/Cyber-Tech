@@ -142,6 +142,12 @@ export default function IncidentMap({
   // Target location (your organization)
   const targetLocation: [number, number] = [40.7128, -74.0060] // New York, NY
 
+  // Map bounds to prevent infinite world wrapping
+  const worldBounds = L.latLngBounds(
+    L.latLng(-90, -180), // Southwest corner
+    L.latLng(90, 180)    // Northeast corner
+  )
+
   if (!mapReady) {
     return (
       <div className="flex items-center justify-center h-96 bg-muted/10 rounded-lg">
@@ -186,12 +192,19 @@ export default function IncidentMap({
       <MapContainer
         center={center}
         zoom={zoom}
+        minZoom={1}
+        maxZoom={10}
+        maxBounds={worldBounds}
+        maxBoundsViscosity={1.0}
+        worldCopyJump={false}
         className="h-full w-full"
         style={{ background: '#0f172a' }}
       >
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+          noWrap={true}
+          bounds={[[-90, -180], [90, 180]]}
         />
 
         {/* Target location marker */}

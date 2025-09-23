@@ -55,13 +55,42 @@ export default function IncidentPage() {
   const [viewMode, setViewMode] = useState<'analyst' | 'manager'>('analyst')
   const [error, setError] = useState<string | null>(null)
   
-  // Resizable panel state
-  const [recommendationPaneWidth, setRecommendationPaneWidth] = useState(400) // Default width in pixels
+  // Resizable panel state - Default to almost half screen width
+  const [recommendationPaneWidth, setRecommendationPaneWidth] = useState(() => {
+    // Default to 45% of viewport width, with fallbacks for different screen sizes
+    if (typeof window !== 'undefined') {
+      const viewportWidth = window.innerWidth
+      if (viewportWidth >= 1920) return Math.floor(viewportWidth * 0.45) // 45% on large screens
+      if (viewportWidth >= 1440) return Math.floor(viewportWidth * 0.42) // 42% on medium-large screens  
+      if (viewportWidth >= 1024) return Math.floor(viewportWidth * 0.40) // 40% on medium screens
+      return 400 // Fallback for smaller screens
+    }
+    return 600 // SSR fallback - reasonable default
+  })
   const [isResizing, setIsResizing] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
   const steps = ['trigger', 'confirm', 'classify', 'contain', 'recover']
   const currentStepIndex = incident ? steps.indexOf(incident.currentStep) : 0
+
+  // Update default width when window resizes
+  useEffect(() => {
+    const handleResize = () => {
+      if (!isResizing) { // Only auto-adjust if user isn't actively resizing
+        const viewportWidth = window.innerWidth
+        let newWidth
+        if (viewportWidth >= 1920) newWidth = Math.floor(viewportWidth * 0.45)
+        else if (viewportWidth >= 1440) newWidth = Math.floor(viewportWidth * 0.42)
+        else if (viewportWidth >= 1024) newWidth = Math.floor(viewportWidth * 0.40)
+        else newWidth = 400
+        
+        setRecommendationPaneWidth(newWidth)
+      }
+    }
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [isResizing])
 
   useEffect(() => {
     fetchIncident()
@@ -91,26 +120,75 @@ export default function IncidentPage() {
   }
 
   const executeAction = async (actionType: string) => {
-    if (!incident) return
+    if (!incident) {
+      console.error('❌ No incident available for action execution')
+      setError('No incident data available')
+      return
+    }
+    
+    console.log(`🔥 Frontend: Executing action "${actionType}" for incident ${incident.id}`)
     
     setExecutingAction(true)
+    setError(null)
+    
     try {
+      const requestBody = { actionType }
+      console.log('📤 Frontend: Sending request:', requestBody)
+      
       const response = await fetch(`/api/incidents/${incident.id}/actions`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ actionType })
+        headers: { 
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
       })
 
-      if (response.ok) {
-        await fetchIncident()
-      } else {
-        const errorData = await response.json()
-        console.error('Action execution failed:', errorData)
-        setError(`Action failed: ${errorData.error}`)
+      console.log(`📥 Frontend: Response status: ${response.status} ${response.statusText}`)
+
+      // Handle response
+      let responseData
+      try {
+        const responseText = await response.text()
+        console.log('📥 Frontend: Raw response:', responseText)
+        
+        if (responseText) {
+          responseData = JSON.parse(responseText)
+        } else {
+          responseData = { error: 'Empty response from server' }
+        }
+      } catch (parseError) {
+        console.error('💥 Frontend: Failed to parse response:', parseError)
+        responseData = { error: 'Invalid response format from server' }
       }
-    } catch (error) {
-      console.error('Error executing action:', error)
-      setError('Network error while executing action')
+
+      if (response.ok && responseData.success) {
+        console.log('✅ Frontend: Action executed successfully:', responseData)
+        
+        // Clear any errors
+        setError(null)
+        
+        // Refresh incident to show new action
+        try {
+          await fetchIncident()
+          console.log('✅ Frontend: Incident data refreshed')
+        } catch (refreshError) {
+          console.error('⚠️ Frontend: Failed to refresh incident:', refreshError)
+          // Don't show error for this, action still succeeded
+        }
+        
+      } else {
+        console.error('❌ Frontend: Action failed:', responseData)
+        
+        const errorMessage = responseData.error || 
+                           responseData.details || 
+                           `Action failed with status ${response.status}`
+        
+        setError(`Action failed: ${errorMessage}`)
+      }
+      
+    } catch (networkError) {
+      console.error('💥 Frontend: Network error:', networkError)
+      setError(`Network error: ${networkError instanceof Error ? networkError.message : 'Connection failed'}`)
     } finally {
       setExecutingAction(false)
     }

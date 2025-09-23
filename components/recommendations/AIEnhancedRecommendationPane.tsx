@@ -163,10 +163,36 @@ export function AIEnhancedRecommendationPane({
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
-            <Brain className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-            <p className="text-muted-foreground">
-              {isEnhancing ? 'AI is analyzing the incident...' : 'No recommendations available for this incident type'}
-            </p>
+            {isEnhancing ? (
+              <>
+                <div className="relative mb-4">
+                  <Brain className="h-12 w-12 text-primary mx-auto animate-pulse" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-foreground font-medium">AI Analysis in Progress</p>
+                  <p className="text-sm text-muted-foreground">
+                    Analyzing incident patterns and generating enhanced recommendations...
+                  </p>
+                  <div className="flex items-center justify-center space-x-2 mt-4">
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <Brain className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                <p className="text-muted-foreground">
+                  No recommendations available for this incident type
+                </p>
+              </>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -181,8 +207,13 @@ export function AIEnhancedRecommendationPane({
             <Brain className="h-5 w-5 text-primary" />
             <span>AI-Enhanced Recommendations</span>
             {isEnhancing && (
-              <div className="animate-spin">
-                <Brain className="h-4 w-4 text-primary/70" />
+              <div className="flex items-center space-x-2">
+                <div className="animate-spin">
+                  <Brain className="h-4 w-4 text-primary/70" />
+                </div>
+                <div className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full animate-pulse">
+                  Processing...
+                </div>
               </div>
             )}
           </CardTitle>
@@ -192,6 +223,7 @@ export function AIEnhancedRecommendationPane({
               size="sm"
               onClick={() => setAiEnabled(!aiEnabled)}
               className={aiEnabled ? 'bg-primary/10 border-primary/30' : ''}
+              disabled={isEnhancing}
             >
               <Brain className="h-4 w-4 mr-1" />
               {aiEnabled ? 'AI On' : 'AI Off'}
@@ -199,15 +231,43 @@ export function AIEnhancedRecommendationPane({
           </div>
         </div>
         <CardDescription>
-          {aiEnabled 
-            ? 'AI-powered recommendations with context analysis and business impact' 
-            : 'Standard recommendations without AI enhancement'
-          }
+          {isEnhancing ? (
+            <div className="flex items-center space-x-2">
+              <div className="flex space-x-1">
+                <div className="w-1 h-1 bg-primary rounded-full animate-bounce"></div>
+                <div className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                <div className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+              </div>
+              <span className="text-primary">
+                AI is analyzing incident context and enhancing recommendations...
+              </span>
+            </div>
+          ) : aiEnabled ? (
+            'AI-powered recommendations with context analysis and business impact'
+          ) : (
+            'Standard recommendations without AI enhancement'
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden">
+        {isEnhancing && enhancedRecommendations.length > 0 && (
+          <div className="mb-4 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+            <div className="flex items-center space-x-2">
+              <div className="animate-spin">
+                <Brain className="h-4 w-4 text-primary" />
+              </div>
+              <span className="text-sm text-primary font-medium">
+                AI Enhancement in Progress
+              </span>
+            </div>
+            <p className="text-xs text-primary/80 mt-1">
+              Basic recommendations are shown below. Enhanced analysis will update automatically.
+            </p>
+          </div>
+        )}
+        
         <ScrollArea className="h-[calc(100vh-16rem)] min-h-[600px] max-h-[1000px]">
-          <div className="space-y-4 pr-4">
+          <div className="space-y-4 pr-1">
             {enhancedRecommendations.map((rec, index) => {
               const isExpanded = expandedRecs.has(rec.id || index.toString())
               const recId = rec.id || index.toString()
@@ -215,46 +275,61 @@ export function AIEnhancedRecommendationPane({
               return (
                 <div
                   key={recId}
-                  className="border border-border rounded-lg p-4 bg-card/50 hover:bg-card/80 transition-all duration-200"
+                  className={`border border-border rounded-lg p-3 bg-card/50 hover:bg-card/80 transition-all duration-200 ${
+                    isEnhancing ? 'opacity-80' : ''
+                  }`}
                 >
                   {/* Header */}
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <Badge variant={getCategoryBadgeVariant(rec.category)}>
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className="flex-1 min-w-0">
+                      {/* Badges Row */}
+                      <div className="flex items-center flex-wrap gap-1 mb-2">
+                        <Badge variant={getCategoryBadgeVariant(rec.category)} className="text-xs">
                           {rec.category}
                         </Badge>
                         {getPriorityIcon(rec.priority)}
                         {rec.confidence && (
                           <Badge variant="outline" className="text-xs">
-                            {Math.round(rec.confidence * 100)}% confidence
+                            {Math.round(rec.confidence * 100)}%
                           </Badge>
                         )}
                         {rec.riskLevel && (
-                          <Badge variant="outline" className={getRiskLevelColor(rec.riskLevel)}>
-                            {rec.riskLevel} risk
+                          <Badge variant="outline" className={`text-xs ${getRiskLevelColor(rec.riskLevel)}`}>
+                            {rec.riskLevel}
+                          </Badge>
+                        )}
+                        {isEnhancing && (
+                          <Badge variant="outline" className="text-xs text-primary border-primary/30">
+                            <div className="w-1 h-1 bg-primary rounded-full animate-pulse mr-1"></div>
+                            Updating...
                           </Badge>
                         )}
                       </div>
-                      <h4 className="font-medium text-foreground mb-1">
+                      
+                      {/* Title */}
+                      <h4 className="font-medium text-foreground mb-1 text-sm leading-tight">
                         {rec.action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                       </h4>
-                      <p className="text-sm text-muted-foreground mb-2">
+                      
+                      {/* Description */}
+                      <p className="text-xs text-muted-foreground line-clamp-2">
                         {rec.detailedExplanation || rec.reason}
                       </p>
                     </div>
-                    <div className="flex items-center space-x-2 ml-4">
+                    
+                    {/* Right side controls */}
+                    <div className="flex flex-col items-end gap-2 flex-shrink-0">
                       {rec.estimatedTime && (
                         <div className="flex items-center text-xs text-muted-foreground">
                           <Clock className="h-3 w-3 mr-1" />
-                          {rec.estimatedTime}
+                          <span className="whitespace-nowrap">{rec.estimatedTime}</span>
                         </div>
                       )}
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => toggleExpanded(recId)}
-                        className="h-8 w-8 p-0"
+                        className="h-8 w-8 p-0 flex-shrink-0"
                       >
                         {isExpanded ? (
                           <ChevronUp className="h-4 w-4" />
@@ -292,7 +367,7 @@ export function AIEnhancedRecommendationPane({
                             {rec.contextFactors.map((factor, idx) => (
                               <li key={idx} className="flex items-start">
                                 <span className="text-accent mr-2">•</span>
-                                {factor}
+                                <span className="break-words">{factor}</span>
                               </li>
                             ))}
                           </ul>
@@ -309,8 +384,8 @@ export function AIEnhancedRecommendationPane({
                           <ol className="text-sm text-muted-foreground pl-5 space-y-1">
                             {rec.implementationSteps.map((step, idx) => (
                               <li key={idx} className="flex items-start">
-                                <span className="text-primary mr-2 font-medium">{idx + 1}.</span>
-                                {step.replace(/^\d+\.\s*/, '')}
+                                <span className="text-primary mr-2 font-medium flex-shrink-0">{idx + 1}.</span>
+                                <span className="break-words">{step.replace(/^\d+\.\s*/, '')}</span>
                               </li>
                             ))}
                           </ol>
@@ -328,7 +403,7 @@ export function AIEnhancedRecommendationPane({
                             {rec.alternatives.map((alt, idx) => (
                               <li key={idx} className="flex items-start">
                                 <span className="text-accent mr-2">•</span>
-                                {alt}
+                                <span className="break-words">{alt}</span>
                               </li>
                             ))}
                           </ul>
@@ -346,10 +421,10 @@ export function AIEnhancedRecommendationPane({
                             href={getCitationLink(rec.citation)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center space-x-1 text-sm text-primary hover:text-primary/80 hover:underline"
+                            className="inline-flex items-center space-x-1 text-sm text-primary hover:text-primary/80 hover:underline break-all"
                           >
                             <span>{rec.citation}</span>
-                            <ExternalLink className="h-3 w-3" />
+                            <ExternalLink className="h-3 w-3 flex-shrink-0" />
                           </a>
                         </div>
                       </div>
@@ -358,7 +433,7 @@ export function AIEnhancedRecommendationPane({
                       <div className="pt-2">
                         <Button
                           onClick={() => onExecuteAction?.(rec.action)}
-                          disabled={rec.applied || isExecuting}
+                          disabled={rec.applied || isExecuting || isEnhancing}
                           className="w-full"
                           variant={rec.applied ? "outline" : "default"}
                         >
@@ -366,6 +441,16 @@ export function AIEnhancedRecommendationPane({
                             <>
                               <CheckCircle2 className="h-4 w-4 mr-2" />
                               Applied
+                            </>
+                          ) : isExecuting ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              Executing...
+                            </>
+                          ) : isEnhancing ? (
+                            <>
+                              <Brain className="h-4 w-4 mr-2 animate-pulse" />
+                              AI Processing...
                             </>
                           ) : (
                             <>
