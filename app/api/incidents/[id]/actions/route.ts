@@ -119,8 +119,8 @@ export async function POST(
         data: {
           incidentId: id,
           type: actionType,
-          status: 'in_progress',
-          executedBy
+          status: 'in_progress'
+          // Remove executedBy field since it doesn't exist in schema
         }
       })
       console.log(`📝 Action record created:`, action)
