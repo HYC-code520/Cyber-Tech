@@ -5,18 +5,20 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { Shield, AlertTriangle, Lock, ExternalLink, Users, Activity } from 'lucide-react'
+import { Shield, AlertTriangle, Lock, ExternalLink, Users, Activity, Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
 
 interface LoginFormProps {
   onAttempt: (email: string, password: string) => Promise<void>
   disabled?: boolean
+  attempts: number
 }
 
-function LoginForm({ onAttempt, disabled }: LoginFormProps) {
+function LoginForm({ onAttempt, disabled, attempts }: LoginFormProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -49,23 +51,39 @@ function LoginForm({ onAttempt, disabled }: LoginFormProps) {
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Password
         </label>
-        <Input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Enter your password"
-          disabled={disabled}
-          required
-          className="w-full bg-white border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 text-gray-900 placeholder:text-gray-500"
-        />
+        <div className="relative">
+          <Input
+            type={showPassword ? "text" : "password"}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Enter your password"
+            disabled={disabled}
+            required
+            className="w-full bg-white border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 text-gray-900 placeholder:text-gray-500 pr-10"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+          >
+            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
+        </div>
       </div>
 
       <Button 
-        type="submit" 
-        className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white text-lg py-6 shadow-lg hover:shadow-xl transition-all transform hover:scale-105" 
+        type="submit"
         disabled={disabled || isSubmitting}
+        className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-medium py-3 shadow-lg hover:shadow-xl transition-all"
       >
-        {isSubmitting ? 'Signing In...' : 'Sign In to TechCorp'}
+        {isSubmitting ? (
+          <>
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+            Signing In...
+          </>
+        ) : (
+          'Sign In'
+        )}
       </Button>
     </form>
   )
@@ -74,37 +92,93 @@ function LoginForm({ onAttempt, disabled }: LoginFormProps) {
 interface AttemptCounterProps {
   current: number
   maximum: number
-  alertLevel: 'none' | 'warning' | 'critical'
+  alertLevel: 'normal' | 'warning' | 'critical'
 }
 
 function AttemptCounter({ current, maximum, alertLevel }: AttemptCounterProps) {
-  if (current === 0) return null
-
   const getStyles = () => {
     switch (alertLevel) {
-      case 'critical': return 'bg-red-50/80 backdrop-blur-sm border-red-200 text-red-800'
-      case 'warning': return 'bg-orange-50/80 backdrop-blur-sm border-orange-200 text-orange-800'
-      default: return 'bg-slate-50/80 backdrop-blur-sm border-slate-200 text-slate-800'
+      case 'critical': 
+        return 'bg-red-50 border-red-200 text-red-800'
+      case 'warning': 
+        return 'bg-orange-50 border-orange-200 text-orange-800'
+      default: 
+        return 'bg-blue-50 border-blue-200 text-blue-800'
     }
   }
 
+  const getIcon = () => {
+    switch (alertLevel) {
+      case 'critical':
+        return <Lock className="h-4 w-4 text-red-600" />
+      case 'warning':
+        return <AlertTriangle className="h-4 w-4 text-orange-600" />
+      default:
+        return <Activity className="h-4 w-4 text-blue-600" />
+    }
+  }
+
+  const getMessage = () => {
+    if (current === 0) {
+      return "Enter any email and password to begin the security demonstration"
+    }
+    
+    if (alertLevel === 'critical') {
+      return "Account will be locked after 5 failed attempts. Security team notified."
+    }
+    
+    if (alertLevel === 'warning') {
+      return "Multiple failed attempts detected. Monitoring for suspicious activity."
+    }
+    
+    return "Demonstration mode - Failed attempts are tracked for security purposes"
+  }
+
   return (
-    <div className={`mt-4 p-4 rounded-xl border ${getStyles()} shadow-sm`}>
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-medium">
-          Login Attempts: {current}/{maximum}
-        </span>
-        {alertLevel === 'warning' && (
-          <AlertTriangle className="h-4 w-4" />
-        )}
-        {alertLevel === 'critical' && (
-          <Lock className="h-4 w-4" />
-        )}
+    <div className={`mt-6 p-4 rounded-xl border-2 ${getStyles()} shadow-sm transition-all duration-300`}>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          {getIcon()}
+          <span className="font-semibold text-sm">
+            Login Attempts: {current}/{maximum}
+          </span>
+        </div>
+        
+        {/* Visual progress bar */}
+        <div className="flex gap-1">
+          {Array.from({ length: maximum }, (_, i) => (
+            <div
+              key={i}
+              className={`w-3 h-3 rounded-full border-2 transition-colors ${
+                i < current 
+                  ? alertLevel === 'critical' 
+                    ? 'bg-red-500 border-red-600' 
+                    : alertLevel === 'warning'
+                    ? 'bg-orange-500 border-orange-600'
+                    : 'bg-blue-500 border-blue-600'
+                  : 'bg-gray-200 border-gray-300'
+              }`}
+            />
+          ))}
+        </div>
       </div>
-      {alertLevel === 'warning' && (
-        <p className="text-xs mt-1">
-          Multiple failed attempts detected. Security team has been notified.
-        </p>
+      
+      <p className="text-xs leading-relaxed">
+        {getMessage()}
+      </p>
+      
+      {current > 0 && (
+        <div className="mt-2 text-xs font-medium">
+          {current < maximum ? (
+            <span className="text-gray-600">
+              {maximum - current} attempts remaining before account lockout
+            </span>
+          ) : (
+            <span className="text-red-600 font-semibold">
+              Maximum attempts reached - Account locked for security
+            </span>
+          )}
+        </div>
       )}
     </div>
   )
@@ -118,52 +192,44 @@ function SecurityLockoutAlert({ incidentId }: { incidentId?: string }) {
           <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center shadow-lg">
             <Lock className="h-5 w-5 text-white" />
           </div>
-          <h3 className="font-semibold text-red-900 text-lg">Account Security Lock</h3>
+          <div>
+            <h3 className="text-lg font-semibold text-red-900">Account Locked</h3>
+            <p className="text-sm text-red-700">Security incident has been triggered</p>
+          </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <p className="text-sm text-red-800">
-          Your account has been temporarily locked due to multiple failed login attempts. 
-          This is a security measure to protect your account from unauthorized access.
-        </p>
-        
-        <div className="bg-white/60 backdrop-blur-sm p-4 rounded-xl border border-red-200 shadow-sm">
-          <h4 className="font-medium text-red-900 text-sm mb-3">Security Response Active:</h4>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-              <span className="text-xs text-red-700">Account access suspended</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-              <span className="text-xs text-red-700">Security team notified</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-              <span className="text-xs text-red-700">Incident report generated</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-              <span className="text-xs text-red-700">Access will be restored</span>
-            </div>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="bg-white/50 p-4 rounded-lg border border-red-200">
+            <p className="text-sm text-red-800 mb-2">
+              <strong>Security Alert:</strong> Multiple failed login attempts detected from your account.
+            </p>
+            <p className="text-sm text-red-700">
+              This account has been temporarily locked as a security precaution. 
+              A security incident has been automatically created and the IT team has been notified.
+            </p>
           </div>
-        </div>
+          
+          {incidentId && (
+            <div className="flex items-center justify-between p-3 bg-red-100 rounded-lg border border-red-200">
+              <div>
+                <p className="text-xs font-medium text-red-900 mb-1">Incident ID</p>
+                <p className="font-mono text-sm text-red-800">{incidentId}</p>
+              </div>
+              <Link 
+                href={`/incident/${incidentId}`}
+                className="flex items-center gap-1 text-xs font-medium text-red-700 hover:text-red-900 transition-colors"
+              >
+                View Details <ExternalLink className="h-3 w-3" />
+              </Link>
+            </div>
+          )}
 
-        {incidentId && (
-          <div className="pt-2">
-            <Link href={`/incident/${incidentId}`} target="_blank">
-              <Button size="sm" variant="outline" className="w-full bg-white/60 backdrop-blur-sm hover:bg-white/80 transition-all">
-                <ExternalLink className="h-4 w-4 mr-2" />
-                View Security Response Details
-              </Button>
-            </Link>
+          <div className="text-center pt-2">
+            <p className="text-xs text-red-600">
+              In a real environment, contact your IT administrator for account recovery.
+            </p>
           </div>
-        )}
-
-        <div className="bg-gradient-to-r from-red-50 to-red-100 p-3 rounded-xl border border-red-200">
-          <p className="text-xs text-red-600 text-center font-medium">
-            Contact IT Support: security@techcorp.com | Ext: 2911
-          </p>
         </div>
       </CardContent>
     </Card>
@@ -173,7 +239,7 @@ function SecurityLockoutAlert({ incidentId }: { incidentId?: string }) {
 export default function LoginPage() {
   const [attempts, setAttempts] = useState(0)
   const [isLocked, setIsLocked] = useState(false)
-  const [alertLevel, setAlertLevel] = useState<'none' | 'warning' | 'critical'>('none')
+  const [alertLevel, setAlertLevel] = useState<'normal' | 'warning' | 'critical'>('normal')
   const [incidentId, setIncidentId] = useState<string>()
   const [errorMessage, setErrorMessage] = useState('')
   const [activeUsers, setActiveUsers] = useState(0)
@@ -206,11 +272,16 @@ export default function LoginPage() {
             }
           }
         } catch (error) {
-          console.log('Account status check failed:', error)
+          console.log('Could not check account status:', error)
         }
       }
     }
 
+    checkAccountStatus()
+  }, [])
+
+  // Load active users count
+  useEffect(() => {
     const loadActiveUsers = async () => {
       try {
         const response = await fetch('/api/demo/statistics')
@@ -219,14 +290,11 @@ export default function LoginPage() {
           setActiveUsers(data.statistics.uniqueUsers || 0)
         }
       } catch (error) {
-        console.log('Failed to load user count:', error)
+        console.log('Could not load active users:', error)
       }
     }
 
-    checkAccountStatus()
     loadActiveUsers()
-    
-    // Poll for active users
     const interval = setInterval(loadActiveUsers, 5000)
     return () => clearInterval(interval)
   }, [])
@@ -250,6 +318,7 @@ export default function LoginPage() {
         // Clear attempts on successful login
         localStorage.removeItem(`attempts-${email}`)
         setAttempts(0)
+        setAlertLevel('normal')
         alert('Login successful!')
         return
       }
@@ -262,7 +331,7 @@ export default function LoginPage() {
       }
 
       // Use the attempts count from the API response (this is the authoritative source)
-      const currentAttempts = data.attempts || 1
+      const currentAttempts = data.attempts || attempts + 1
       setAttempts(currentAttempts)
       
       // Persist attempt count to localStorage for this email
@@ -273,6 +342,8 @@ export default function LoginPage() {
         setAlertLevel('critical')
       } else if (currentAttempts >= 3) {
         setAlertLevel('warning')
+      } else {
+        setAlertLevel('normal')
       }
 
       setErrorMessage(data.message || 'Invalid email or password. Please try again.')
@@ -280,8 +351,8 @@ export default function LoginPage() {
       console.log(`📊 Login attempt #${currentAttempts} for ${email}`)
 
     } catch (error) {
-      setErrorMessage('Connection error. Please try again.')
       console.error('Login error:', error)
+      setErrorMessage('Unable to connect to authentication server. Please try again.')
     }
   }
 
@@ -291,30 +362,24 @@ export default function LoginPage() {
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-100 rounded-full opacity-50"></div>
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-cyan-100 rounded-full opacity-50"></div>
-        <div className="absolute top-1/3 right-1/4 w-64 h-64 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-full opacity-40"></div>
-        <div className="absolute bottom-1/3 left-1/4 w-48 h-48 bg-gradient-to-br from-cyan-50 to-blue-50 rounded-full opacity-30"></div>
       </div>
 
       <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
         <div className="max-w-md w-full">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full mb-6 shadow-xl">
-              <Shield className="h-10 w-10 text-white" />
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full mb-4 shadow-lg">
+              <Shield className="h-8 w-8 text-white" />
             </div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">
-              TechCorp
-            </h1>
-            <p className="text-xl text-gray-600 mb-2">Employee Portal</p>
-            <p className="text-sm text-gray-500 mb-4">Secure Access Gateway</p>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">TechCorp Employee Portal</h1>
+            <p className="text-gray-600">Secure access to company resources</p>
             
-            {/* Status indicators */}
-            <div className="flex items-center justify-center gap-4 mb-2">
-              <Badge className="bg-green-100 text-green-800 border-green-300 px-3 py-1 text-sm font-medium shadow-sm">
+            <div className="flex items-center justify-center gap-3 mt-4">
+              <Badge className="bg-green-100 text-green-800 border-green-300 px-3 py-1 text-sm">
                 <Users className="h-3 w-3 mr-1" />
-                {activeUsers} active {activeUsers === 1 ? 'user' : 'users'}
+                {activeUsers} active
               </Badge>
-              <Badge className="bg-blue-100 text-blue-800 border-blue-300 px-3 py-1 text-sm font-medium shadow-sm">
+              <Badge className="bg-blue-100 text-blue-800 border-blue-300 px-3 py-1 text-sm">
                 <Activity className="h-3 w-3 mr-1" />
                 Live Demo
               </Badge>
@@ -336,7 +401,7 @@ export default function LoginPage() {
                 <SecurityLockoutAlert incidentId={incidentId} />
               ) : (
                 <>
-                  <LoginForm onAttempt={handleLoginAttempt} disabled={isLocked} />
+                  <LoginForm onAttempt={handleLoginAttempt} disabled={isLocked} attempts={attempts} />
                   
                   {errorMessage && (
                     <div className="mt-4 p-4 bg-red-50/80 backdrop-blur-sm border border-red-200 rounded-xl shadow-sm">
@@ -347,6 +412,7 @@ export default function LoginPage() {
                     </div>
                   )}
 
+                  {/* Always show the attempt counter - this is the key fix */}
                   <AttemptCounter 
                     current={attempts} 
                     maximum={5} 
