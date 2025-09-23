@@ -24,6 +24,35 @@ export class AttackDetector {
   }
   private readonly MAX_ATTEMPTS_PER_SECOND = 0.5
 
+  // Load attempts from localStorage (browser) or a simple file cache (server)
+  private loadPersistedAttempts(email: string): LoginAttempt[] {
+    if (typeof window !== 'undefined') {
+      // Browser environment
+      const stored = localStorage.getItem(`attack-detector-${email}`)
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored)
+          return parsed.map((a: any) => ({
+            ...a,
+            timestamp: new Date(a.timestamp)
+          }))
+        } catch (e) {
+          console.warn('Failed to parse stored attempts:', e)
+        }
+      }
+    }
+    return []
+  }
+
+  // Save attempts to localStorage (browser) or simple file cache (server)
+  private savePersistedAttempts(email: string, attempts: LoginAttempt[]): void {
+    if (typeof window !== 'undefined') {
+      // Browser environment
+      localStorage.setItem(`attack-detector-${email}`, JSON.stringify(attempts))
+    }
+    // Note: In production, you'd want to use Redis or database storage
+  }
+
   async recordAttempt(
     email: string, 
     ipAddress: string, 
@@ -32,8 +61,8 @@ export class AttackDetector {
     const now = new Date()
     const windowStart = new Date(now.getTime() - (this.WINDOW_MINUTES * 60 * 1000))
     
-    // Get existing attempts for this user
-    let userAttempts = this.attempts.get(email) || []
+    // Get existing attempts for this user (from memory and persistence)
+    let userAttempts = this.attempts.get(email) || this.loadPersistedAttempts(email)
     
     // Filter to time window - remove old attempts
     userAttempts = userAttempts.filter(a => a.timestamp >= windowStart)
@@ -51,14 +80,36 @@ export class AttackDetector {
     userAttempts.push(newAttempt)
     this.attempts.set(email, userAttempts)
     
+    // Persist the attempts
+    this.savePersistedAttempts(email, userAttempts)
+    
     // Clean up old entries periodically
     this.cleanupOldAttempts()
+    
+    console.log(`🔢 Recorded attempt ${userAttempts.length} for ${email}`)
     
     return userAttempts.length
   }
 
+  // Get current attempt count for a user
+  getAttemptCount(email: string): number {
+    const windowStart = new Date(Date.now() - (this.WINDOW_MINUTES * 60 * 1000))
+    let userAttempts = this.attempts.get(email) || this.loadPersistedAttempts(email)
+    userAttempts = userAttempts.filter(a => a.timestamp >= windowStart)
+    return userAttempts.length
+  }
+
+  // Clear attempts for a user (e.g., on successful login)
+  clearAttempts(email: string): void {
+    this.attempts.delete(email)
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(`attack-detector-${email}`)
+    }
+    console.log(`🧹 Cleared attempts for ${email}`)
+  }
+
   analyzePattern(email: string): AttackPattern | null {
-    const userAttempts = this.attempts.get(email) || []
+    let userAttempts = this.attempts.get(email) || this.loadPersistedAttempts(email)
     
     if (userAttempts.length < 3) return null
 
@@ -70,40 +121,37 @@ export class AttackDetector {
     if (frequency > this.MAX_ATTEMPTS_PER_SECOND) {
       return {
         type: 'brute_force',
-        confidence: 0.9,
+        confidence: Math.min(frequency / this.MAX_ATTEMPTS_PER_SECOND, 1.0),
         indicators: {
           attempts_per_second: frequency,
-          total_attempts: userAttempts.length,
           unique_ips: uniqueIPs.size,
-          time_window_minutes: this.WINDOW_MINUTES
+          total_attempts: userAttempts.length
         }
       }
     }
 
-    // Distributed attack detection
-    if (uniqueIPs.size > 2) {
-      return {
-        type: 'credential_stuffing',
-        confidence: 0.85,
-        indicators: {
-          failed_attempts: userAttempts.length,
-          unique_ips: uniqueIPs.size,
-          time_window_minutes: this.WINDOW_MINUTES,
-          distributed_attack: true
-        }
-      }
-    }
-
-    // Password spray detection - multiple attempts from same source
-    if (userAttempts.length >= 3) {
+    // Password spray detection - multiple IPs targeting single account
+    if (uniqueIPs.size > 1 && userAttempts.length >= 3) {
       return {
         type: 'password_spray',
-        confidence: 0.8,
+        confidence: Math.min(uniqueIPs.size / 5, 1.0),
         indicators: {
-          failed_attempts: userAttempts.length,
-          time_window_minutes: this.WINDOW_MINUTES,
           unique_ips: uniqueIPs.size,
-          primary_ip: userAttempts[0].ipAddress
+          total_attempts: userAttempts.length,
+          time_span_minutes: timeSpan / (1000 * 60)
+        }
+      }
+    }
+
+    // Credential stuffing detection - high volume from few IPs
+    if (userAttempts.length >= 5 && uniqueIPs.size <= 2) {
+      return {
+        type: 'credential_stuffing',
+        confidence: Math.min(userAttempts.length / 10, 1.0),
+        indicators: {
+          total_attempts: userAttempts.length,
+          unique_ips: uniqueIPs.size,
+          attempts_per_ip: userAttempts.length / uniqueIPs.size
         }
       }
     }
@@ -112,8 +160,11 @@ export class AttackDetector {
   }
 
   getThreatLevel(attemptCount: number): ThreatLevel {
-    if (attemptCount >= this.ATTEMPT_THRESHOLDS.CRITICAL) return 'HIGH'
-    if (attemptCount >= this.ATTEMPT_THRESHOLDS.WARNING) return 'MEDIUM'
+    if (attemptCount >= this.ATTEMPT_THRESHOLDS.CRITICAL) {
+      return 'HIGH'
+    } else if (attemptCount >= this.ATTEMPT_THRESHOLDS.WARNING) {
+      return 'MEDIUM'
+    }
     return 'LOW'
   }
 
@@ -182,8 +233,8 @@ export class AttackDetector {
   private calculateTimeSpan(attempts: LoginAttempt[]): number {
     if (attempts.length < 2) return 0
     
-    const sorted = attempts.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())
-    return sorted[sorted.length - 1].timestamp.getTime() - sorted[0].timestamp.getTime()
+    const timestamps = attempts.map(a => a.timestamp.getTime()).sort()
+    return timestamps[timestamps.length - 1] - timestamps[0]
   }
 
   private cleanupOldAttempts(): void {

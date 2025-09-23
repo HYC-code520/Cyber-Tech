@@ -17,7 +17,8 @@ import {
   ChevronUp,
   Lightbulb,
   Target,
-  TrendingUp
+  TrendingUp,
+  ChevronRight
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { citationLinks, getRiskIndicator, timeEstimates } from '@/lib/rules/recommendations'
@@ -149,6 +150,20 @@ export function AIEnhancedRecommendationPane({
     return citationLinks[citation] || '#'
   }
 
+  const handleCitationClick = (citation: string, event: React.MouseEvent) => {
+    const link = getCitationLink(citation)
+    if (link && link !== '#') {
+      console.log(`🚀 Opening citation link: ${link}`)
+      // Let the default anchor behavior handle the link opening
+      return true
+    } else {
+      console.warn(`⚠️ No valid link found for citation: "${citation}"`)
+      event.preventDefault()
+      alert(`No external link available for: ${citation}`)
+      return false
+    }
+  }
+
   if (enhancedRecommendations.length === 0) {
     return (
       <Card>
@@ -275,190 +290,285 @@ export function AIEnhancedRecommendationPane({
               return (
                 <div
                   key={recId}
-                  className={`border border-border rounded-lg p-3 bg-card/50 hover:bg-card/80 transition-all duration-200 ${
+                  className={`border border-border rounded-lg bg-card/50 hover:bg-card/80 transition-all duration-200 ${
                     isEnhancing ? 'opacity-80' : ''
                   }`}
                 >
-                  {/* Header */}
-                  <div className="flex items-start gap-3 mb-3">
-                    <div className="flex-1 min-w-0">
-                      {/* Badges Row */}
-                      <div className="flex items-center flex-wrap gap-1 mb-2">
-                        <Badge variant={getCategoryBadgeVariant(rec.category)} className="text-xs">
-                          {rec.category}
-                        </Badge>
-                        {getPriorityIcon(rec.priority)}
-                        {rec.confidence && (
-                          <Badge variant="outline" className="text-xs">
-                            {Math.round(rec.confidence * 100)}%
+                  {/* Main Card Content */}
+                  <div className="p-3">
+                    {/* Header */}
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className="flex-1 min-w-0">
+                        {/* Badges Row */}
+                        <div className="flex items-center flex-wrap gap-1 mb-2">
+                          <Badge variant={getCategoryBadgeVariant(rec.category)} className="text-xs">
+                            {rec.category}
                           </Badge>
-                        )}
-                        {rec.riskLevel && (
-                          <Badge variant="outline" className={`text-xs ${getRiskLevelColor(rec.riskLevel)}`}>
-                            {rec.riskLevel}
-                          </Badge>
-                        )}
-                        {isEnhancing && (
-                          <Badge variant="outline" className="text-xs text-primary border-primary/30">
-                            <div className="w-1 h-1 bg-primary rounded-full animate-pulse mr-1"></div>
-                            Updating...
-                          </Badge>
-                        )}
+                          {getPriorityIcon(rec.priority)}
+                          {rec.confidence && (
+                            <Badge variant="outline" className="text-xs">
+                              {Math.round(rec.confidence * 100)}%
+                            </Badge>
+                          )}
+                          {rec.riskLevel && (
+                            <Badge variant="outline" className={`text-xs ${getRiskLevelColor(rec.riskLevel)}`}>
+                              {rec.riskLevel}
+                            </Badge>
+                          )}
+                          {isEnhancing && (
+                            <Badge variant="outline" className="text-xs text-primary border-primary/30">
+                              <div className="w-1 h-1 bg-primary rounded-full animate-pulse mr-1"></div>
+                              Updating...
+                            </Badge>
+                          )}
+                        </div>
+                        
+                        {/* Title */}
+                        <h4 className="font-medium text-foreground mb-1 text-sm leading-tight">
+                          {rec.action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                        </h4>
+                        
+                        {/* Description */}
+                        <p className="text-xs text-muted-foreground line-clamp-2">
+                          {rec.detailedExplanation || rec.reason}
+                        </p>
                       </div>
                       
-                      {/* Title */}
-                      <h4 className="font-medium text-foreground mb-1 text-sm leading-tight">
-                        {rec.action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                      </h4>
-                      
-                      {/* Description */}
-                      <p className="text-xs text-muted-foreground line-clamp-2">
-                        {rec.detailedExplanation || rec.reason}
-                      </p>
-                    </div>
-                    
-                    {/* Right side controls */}
-                    <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                      {/* Time estimate */}
                       {rec.estimatedTime && (
-                        <div className="flex items-center text-xs text-muted-foreground">
+                        <div className="flex items-center text-xs text-muted-foreground flex-shrink-0">
                           <Clock className="h-3 w-3 mr-1" />
                           <span className="whitespace-nowrap">{rec.estimatedTime}</span>
                         </div>
                       )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => toggleExpanded(recId)}
-                        className="h-8 w-8 p-0 flex-shrink-0"
-                      >
-                        {isExpanded ? (
-                          <ChevronUp className="h-4 w-4" />
-                        ) : (
-                          <ChevronDown className="h-4 w-4" />
-                        )}
-                      </Button>
+                    </div>
+                  </div>
+
+                  {/* SUPER PROMINENT Expand/Collapse Button */}
+                  <div 
+                    className={`
+                      mx-3 mb-3 rounded-lg border-2 transition-all duration-200 cursor-pointer
+                      ${isExpanded 
+                        ? 'bg-primary/10 border-primary/30 hover:bg-primary/15' 
+                        : 'bg-gradient-to-r from-primary/5 to-accent/5 border-primary/20 hover:border-primary/40 hover:bg-gradient-to-r hover:from-primary/10 hover:to-accent/10 shadow-sm hover:shadow-md'
+                      }
+                    `}
+                    onClick={() => toggleExpanded(recId)}
+                  >
+                    <div className="px-4 py-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className={`
+                            w-8 h-8 rounded-full flex items-center justify-center transition-colors
+                            ${isExpanded 
+                              ? 'bg-primary/20 text-primary' 
+                              : 'bg-primary/10 text-primary hover:bg-primary/20'
+                            }
+                          `}>
+                            {isExpanded ? (
+                              <ChevronUp className="h-5 w-5" />
+                            ) : (
+                              <ChevronDown className="h-5 w-5" />
+                            )}
+                          </div>
+                          
+                          <div>
+                            <div className="flex items-center space-x-2">
+                              <span className={`
+                                font-medium transition-colors
+                                ${isExpanded 
+                                  ? 'text-primary' 
+                                  : 'text-foreground hover:text-primary'
+                                }
+                              `}>
+                                {isExpanded ? 'Hide AI Analysis' : 'Show AI Analysis'}
+                              </span>
+                              
+                              {!isExpanded && (
+                                <Badge className="bg-primary/20 text-primary border-primary/30">
+                                  <Brain className="h-3 w-3 mr-1" />
+                                  Enhanced
+                                </Badge>
+                              )}
+                            </div>
+                            
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {isExpanded 
+                                ? 'Collapse detailed analysis and recommendations'
+                                : `View ${[
+                                    rec.businessImpact && 'business impact',
+                                    rec.implementationSteps && 'implementation steps',
+                                    rec.contextFactors && 'context analysis'
+                                  ].filter(Boolean).join(', ')}`
+                              }
+                            </p>
+                          </div>
+                        </div>
+                        
+                        {/* Visual indicator */}
+                        <div className="flex items-center space-x-2">
+                          {!isExpanded && (
+                            <div className="flex items-center space-x-1">
+                              <div className="flex flex-col space-y-1">
+                                <div className="flex space-x-1">
+                                  <div className="w-2 h-0.5 bg-primary/60 rounded-full"></div>
+                                  <div className="w-3 h-0.5 bg-primary/40 rounded-full"></div>
+                                  <div className="w-2 h-0.5 bg-primary/60 rounded-full"></div>
+                                </div>
+                                <div className="flex space-x-1">
+                                  <div className="w-1 h-0.5 bg-accent/60 rounded-full"></div>
+                                  <div className="w-4 h-0.5 bg-accent/40 rounded-full"></div>
+                                  <div className="w-1 h-0.5 bg-accent/60 rounded-full"></div>
+                                </div>
+                              </div>
+                              <ChevronRight className="h-4 w-4 text-primary/60" />
+                            </div>
+                          )}
+                          
+                          {isExpanded && (
+                            <div className="text-primary">
+                              <ChevronUp className="h-4 w-4" />
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
 
                   {/* Expanded Content */}
                   {isExpanded && (
-                    <div className="space-y-4 pt-3 border-t border-border">
-                      {/* Business Impact */}
-                      {rec.businessImpact && (
-                        <div>
-                          <div className="flex items-center space-x-1 mb-2">
-                            <TrendingUp className="h-4 w-4 text-primary" />
-                            <span className="text-sm font-medium text-foreground">Business Impact</span>
+                    <div className="mx-3 mb-3 rounded-lg bg-muted/5 border border-border/30">
+                      <div className="p-4 space-y-4">
+                        {/* Business Impact */}
+                        {rec.businessImpact && (
+                          <div>
+                            <div className="flex items-center space-x-2 mb-3">
+                              <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                                <TrendingUp className="h-4 w-4 text-primary" />
+                              </div>
+                              <span className="text-sm font-semibold text-foreground">Business Impact</span>
+                            </div>
+                            <p className="text-sm text-muted-foreground pl-8">
+                              {rec.businessImpact}
+                            </p>
                           </div>
-                          <p className="text-sm text-muted-foreground pl-5">
-                            {rec.businessImpact}
-                          </p>
-                        </div>
-                      )}
+                        )}
 
-                      {/* Context Factors */}
-                      {rec.contextFactors && rec.contextFactors.length > 0 && (
-                        <div>
-                          <div className="flex items-center space-x-1 mb-2">
-                            <Target className="h-4 w-4 text-accent" />
-                            <span className="text-sm font-medium text-foreground">Context Factors</span>
+                        {/* Context Factors */}
+                        {rec.contextFactors && rec.contextFactors.length > 0 && (
+                          <div>
+                            <div className="flex items-center space-x-2 mb-3">
+                              <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center">
+                                <Target className="h-4 w-4 text-accent" />
+                              </div>
+                              <span className="text-sm font-semibold text-foreground">Context Analysis</span>
+                            </div>
+                            <ul className="text-sm text-muted-foreground pl-8 space-y-2">
+                              {rec.contextFactors.map((factor, idx) => (
+                                <li key={idx} className="flex items-start">
+                                  <span className="text-accent mr-2 mt-1">•</span>
+                                  <span className="break-words">{factor}</span>
+                                </li>
+                              ))}
+                            </ul>
                           </div>
-                          <ul className="text-sm text-muted-foreground pl-5 space-y-1">
-                            {rec.contextFactors.map((factor, idx) => (
-                              <li key={idx} className="flex items-start">
-                                <span className="text-accent mr-2">•</span>
-                                <span className="break-words">{factor}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
+                        )}
 
-                      {/* Implementation Steps */}
-                      {rec.implementationSteps && rec.implementationSteps.length > 0 && (
-                        <div>
-                          <div className="flex items-center space-x-1 mb-2">
-                            <CheckCircle2 className="h-4 w-4 text-primary" />
-                            <span className="text-sm font-medium text-foreground">Implementation Steps</span>
+                        {/* Implementation Steps */}
+                        {rec.implementationSteps && rec.implementationSteps.length > 0 && (
+                          <div>
+                            <div className="flex items-center space-x-2 mb-3">
+                              <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                                <CheckCircle2 className="h-4 w-4 text-primary" />
+                              </div>
+                              <span className="text-sm font-semibold text-foreground">Implementation Guide</span>
+                            </div>
+                            <ol className="text-sm text-muted-foreground pl-8 space-y-2">
+                              {rec.implementationSteps.map((step, idx) => (
+                                <li key={idx} className="flex items-start">
+                                  <span className="text-primary mr-3 font-semibold flex-shrink-0 mt-0.5">{idx + 1}.</span>
+                                  <span className="break-words">{step.replace(/^\d+\.\s*/, '')}</span>
+                                </li>
+                              ))}
+                            </ol>
                           </div>
-                          <ol className="text-sm text-muted-foreground pl-5 space-y-1">
-                            {rec.implementationSteps.map((step, idx) => (
-                              <li key={idx} className="flex items-start">
-                                <span className="text-primary mr-2 font-medium flex-shrink-0">{idx + 1}.</span>
-                                <span className="break-words">{step.replace(/^\d+\.\s*/, '')}</span>
-                              </li>
-                            ))}
-                          </ol>
-                        </div>
-                      )}
+                        )}
 
-                      {/* Alternatives */}
-                      {rec.alternatives && rec.alternatives.length > 0 && (
-                        <div>
-                          <div className="flex items-center space-x-1 mb-2">
-                            <Lightbulb className="h-4 w-4 text-accent" />
-                            <span className="text-sm font-medium text-foreground">Alternative Approaches</span>
+                        {/* Alternatives */}
+                        {rec.alternatives && rec.alternatives.length > 0 && (
+                          <div>
+                            <div className="flex items-center space-x-2 mb-3">
+                              <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center">
+                                <Lightbulb className="h-4 w-4 text-accent" />
+                              </div>
+                              <span className="text-sm font-semibold text-foreground">Alternative Approaches</span>
+                            </div>
+                            <ul className="text-sm text-muted-foreground pl-8 space-y-2">
+                              {rec.alternatives.map((alt, idx) => (
+                                <li key={idx} className="flex items-start">
+                                  <span className="text-accent mr-2 mt-1">•</span>
+                                  <span className="break-words">{alt}</span>
+                                </li>
+                              ))}
+                            </ul>
                           </div>
-                          <ul className="text-sm text-muted-foreground pl-5 space-y-1">
-                            {rec.alternatives.map((alt, idx) => (
-                              <li key={idx} className="flex items-start">
-                                <span className="text-accent mr-2">•</span>
-                                <span className="break-words">{alt}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
+                        )}
 
-                      {/* Citation */}
-                      <div>
-                        <div className="flex items-center space-x-1 mb-2">
-                          <Info className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm font-medium text-foreground">Citation</span>
+                        {/* Citation */}
+                        <div className="space-y-3">
+                          <div className="flex items-center space-x-2 mb-3">
+                            <div className="w-6 h-6 rounded-full bg-muted/20 flex items-center justify-center">
+                              <Info className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                            <span className="text-sm font-semibold text-foreground">Source Reference</span>
+                          </div>
+                          <div className="pl-8">
+                            <a
+                              href={getCitationLink(rec.citation)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center space-x-1 text-sm text-primary hover:text-primary/80 hover:underline break-all"
+                            >
+                              <span>{rec.citation}</span>
+                              <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                            </a>
+                          </div>
                         </div>
-                        <div className="pl-5">
-                          <a
-                            href={getCitationLink(rec.citation)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center space-x-1 text-sm text-primary hover:text-primary/80 hover:underline break-all"
+
+                        {/* Action Button */}
+                        <div className="pt-4 border-t border-border/30">
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onExecuteAction?.(rec.action)
+                            }}
+                            disabled={rec.applied || isExecuting || isEnhancing}
+                            className="w-full h-12 text-base font-medium"
+                            variant={rec.applied ? "outline" : "default"}
                           >
-                            <span>{rec.citation}</span>
-                            <ExternalLink className="h-3 w-3 flex-shrink-0" />
-                          </a>
+                            {rec.applied ? (
+                              <>
+                                <CheckCircle2 className="h-5 w-5 mr-2" />
+                                Action Applied Successfully
+                              </>
+                            ) : isExecuting ? (
+                              <>
+                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                                Executing Action...
+                              </>
+                            ) : isEnhancing ? (
+                              <>
+                                <Brain className="h-5 w-5 mr-2 animate-pulse" />
+                                AI Processing...
+                              </>
+                            ) : (
+                              <>
+                                <Shield className="h-5 w-5 mr-2" />
+                                Execute Security Action
+                              </>
+                            )}
+                          </Button>
                         </div>
-                      </div>
-
-                      {/* Action Button */}
-                      <div className="pt-2">
-                        <Button
-                          onClick={() => onExecuteAction?.(rec.action)}
-                          disabled={rec.applied || isExecuting || isEnhancing}
-                          className="w-full"
-                          variant={rec.applied ? "outline" : "default"}
-                        >
-                          {rec.applied ? (
-                            <>
-                              <CheckCircle2 className="h-4 w-4 mr-2" />
-                              Applied
-                            </>
-                          ) : isExecuting ? (
-                            <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                              Executing...
-                            </>
-                          ) : isEnhancing ? (
-                            <>
-                              <Brain className="h-4 w-4 mr-2 animate-pulse" />
-                              AI Processing...
-                            </>
-                          ) : (
-                            <>
-                              <Shield className="h-4 w-4 mr-2" />
-                              Execute Action
-                            </>
-                          )}
-                        </Button>
                       </div>
                     </div>
                   )}

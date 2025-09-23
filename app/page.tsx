@@ -35,17 +35,33 @@ export default function Dashboard() {
       severity: severityFilter
     })
 
+    console.log(`🗺️ Fetching map incidents: /api/incidents/locations?${params.toString()}`)
+
     fetch(`/api/incidents/locations?${params}`)
-      .then(res => res.json())
+      .then(res => {
+        console.log(`🗺️ Response status: ${res.status}`)
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`)
+        }
+        return res.json()
+      })
       .then(data => {
-        if (data.success && data.incidents) {
+        console.log('🗺️ Full API response:', data)
+        
+        if (data.success && Array.isArray(data.incidents)) {
+          console.log(`🗺️ Setting ${data.incidents.length} incidents on map`)
+          console.log('🗺️ Sample incidents:', data.incidents.slice(0, 3))
           setMapIncidents(data.incidents)
+        } else {
+          console.error('🗺️ API call failed or invalid response format:', data)
+          setMapIncidents([])
         }
         setMapLoading(false)
       })
       .catch(error => {
-        console.error('Error fetching map incidents:', error)
+        console.error('🗺️ Network error fetching map incidents:', error)
         setMapLoading(false)
+        setMapIncidents([])
       })
   }
 
@@ -91,9 +107,15 @@ export default function Dashboard() {
   }, [])
 
   useEffect(() => {
+    console.log(`🔄 Filters changed: timeRange=${timeRange}, severityFilter=${severityFilter}`)
     fetchMapIncidents()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeRange, severityFilter])
+
+  // Add an initial load effect
+  useEffect(() => {
+    console.log('🚀 Dashboard mounted, loading map incidents...')
+    fetchMapIncidents()
+  }, [])
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
@@ -101,228 +123,208 @@ export default function Dashboard() {
       case 'high': return 'bg-orange-500/30 text-orange-200 border-orange-400/50'
       case 'medium': return 'bg-yellow-500/30 text-yellow-200 border-yellow-400/50'
       case 'low': return 'bg-green-500/30 text-green-200 border-green-400/50'
-      default: return 'bg-slate-500/30 text-slate-200 border-slate-400/50'
+      default: return 'bg-gray-500/30 text-gray-200 border-gray-400/50'
     }
   }
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'triggered': return 'bg-red-500/30 text-red-200'
-      case 'confirmed': return 'bg-orange-500/30 text-orange-200'
-      case 'classified': return 'bg-blue-500/30 text-blue-200'
-      case 'contained': return 'bg-purple-500/30 text-purple-200'
-      case 'recovered': return 'bg-green-500/30 text-green-200'
-      case 'closed': return 'bg-slate-500/30 text-slate-200'
-      default: return 'bg-slate-500/30 text-slate-200'
+      case 'triggered': return 'bg-red-500/30 text-red-200 border-red-400/50'
+      case 'confirmed': return 'bg-orange-500/30 text-orange-200 border-orange-400/50'
+      case 'classified': return 'bg-blue-500/30 text-blue-200 border-blue-400/50'
+      case 'contained': return 'bg-purple-500/30 text-purple-200 border-purple-400/50'
+      case 'recovered': return 'bg-cyan-500/30 text-cyan-200 border-cyan-400/50'
+      case 'documented': return 'bg-green-500/30 text-green-200 border-green-400/50'
+      case 'closed': return 'bg-gray-500/30 text-gray-200 border-gray-400/50'
+      default: return 'bg-gray-500/30 text-gray-200 border-gray-400/50'
     }
   }
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-
-      <main className="container mx-auto px-6 py-8">
-        <div className="space-y-8">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">Security Signals related to Account Compromise</h1>
-              <p className="text-muted-foreground mt-1">Real-time incident monitoring and response coordination</p>
-            </div>
-            <div className="flex space-x-3">
-              <Button variant="outline" asChild className="border-primary/40 hover:bg-primary/20 text-foreground">
-                <Link href="/simulate">
-                  <Play className="h-4 w-4 mr-2" />
-                  Scenario Demo
-                </Link>
-              </Button>
-              <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                <Link href="/demo-lobby">
-                  <QrCode className="h-4 w-4 mr-2" />
-                  Interactive Demo
-                </Link>
-              </Button>
-              <Button variant="outline" asChild className="border-primary/40 hover:bg-primary/20 text-foreground">
-                <Link href="/incident/new">
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Investigation
-                </Link>
-              </Button>
-            </div>
+      <main className="container mx-auto px-4 py-8 space-y-6">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Security Dashboard</h1>
+            <p className="text-muted-foreground">
+              Real-time monitoring and incident response for Identity Sentinel
+            </p>
           </div>
 
-          {/* Global Threat Map */}
-          <Card className="bg-card/60 border-border/50 backdrop-blur-sm">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Globe className="h-5 w-5 text-primary" />
-                  <CardTitle className="text-foreground">Global Threat Map</CardTitle>
-                </div>
-                <Badge className="bg-primary/20 text-primary">
-                  Live - Last 24 Hours
-                </Badge>
+          <div className="flex items-center space-x-4">
+            <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
+              <Plus className="h-4 w-4 mr-2" />
+              Create Alert
+            </Button>
+            <Button variant="outline" size="sm" asChild className="border-primary/40 hover:bg-primary/20 text-foreground">
+              <Link href="/demo-control">
+                <QrCode className="h-4 w-4 mr-2" />
+                Demo Control
+              </Link>
+            </Button>
+          </div>
+        </div>
+
+        {/* Global Threat Map */}
+        <Card className="bg-card/60 border-border/50 backdrop-blur-sm">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Globe className="h-5 w-5 text-primary" />
+                <CardTitle className="text-foreground">Global Threat Map</CardTitle>
               </div>
-              <CardDescription className="text-muted-foreground">
-                Real-time visualization of login incidents and attack patterns worldwide
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-4">
-              <MapControls
-                timeRange={timeRange}
-                onTimeRangeChange={setTimeRange}
-                severityFilter={severityFilter}
-                onSeverityFilterChange={setSeverityFilter}
-                onRefresh={fetchMapIncidents}
-                onExport={handleExportMap}
-                isLoading={mapLoading}
-                incidentCount={mapIncidents.length}
-              />
-              <div className="mt-4">
-                {mapLoading ? (
-                  <div className="flex items-center justify-center h-[600px] bg-muted/10 rounded-lg">
-                    <div className="text-center">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                      <p className="text-muted-foreground">Loading threat map...</p>
-                    </div>
+              <Badge className="bg-primary/20 text-primary">
+                Live - Last 24 Hours
+              </Badge>
+            </div>
+            <CardDescription className="text-muted-foreground">
+              Real-time visualization of login incidents and attack patterns worldwide
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-4">
+            <MapControls
+              timeRange={timeRange}
+              onTimeRangeChange={setTimeRange}
+              severityFilter={severityFilter}
+              onSeverityFilterChange={setSeverityFilter}
+              onRefresh={fetchMapIncidents}
+              onExport={handleExportMap}
+              isLoading={mapLoading}
+              incidentCount={mapIncidents.length}
+            />
+            <div className="mt-4">
+              {mapLoading ? (
+                <div className="flex items-center justify-center h-[600px] bg-muted/10 rounded-lg">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                    <p className="text-muted-foreground">Loading threat map...</p>
                   </div>
-                ) : (
-                  <IncidentMap incidents={mapIncidents} />
-                )}
+                </div>
+              ) : (
+                <IncidentMap incidents={mapIncidents} />
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Security Signals Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card className="border-red-400/50 bg-red-500/10 backdrop-blur-sm">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-red-200 text-sm font-medium">Critical Incidents</p>
+                  <p className="text-3xl font-bold text-red-400">
+                    {Math.floor(mapIncidents.length * 0.15)}
+                  </p>
+                </div>
+                <AlertTriangle className="h-8 w-8 text-red-400 opacity-60" />
               </div>
             </CardContent>
           </Card>
 
-          {/* Security Signals Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="bg-card/60 border-border/50 backdrop-blur-sm metric-card">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Signals</CardTitle>
-                <AlertTriangle className="h-5 w-5 text-orange-400" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-4xl font-bold text-orange-300">8</div>
-                <p className="text-xs text-muted-foreground mt-1">Active security alerts</p>
-              </CardContent>
-            </Card>
+          <Card className="border-orange-400/50 bg-orange-500/10 backdrop-blur-sm">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-orange-200 text-sm font-medium">Active Threats</p>
+                  <p className="text-3xl font-bold text-orange-400">
+                    {Math.floor(mapIncidents.length * 0.35)}
+                  </p>
+                </div>
+                <Eye className="h-8 w-8 text-orange-400 opacity-60" />
+              </div>
+            </CardContent>
+          </Card>
 
-            <Card className="bg-card/60 border-border/50 backdrop-blur-sm metric-card">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Unique IPs</CardTitle>
-                <Activity className="h-5 w-5 text-red-400" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-4xl font-bold text-red-300">11</div>
-                <p className="text-xs text-muted-foreground mt-1">Suspicious sources</p>
-              </CardContent>
-            </Card>
+          <Card className="border-blue-400/50 bg-blue-500/10 backdrop-blur-sm">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-blue-200 text-sm font-medium">Investigations</p>
+                  <p className="text-3xl font-bold text-blue-400">
+                    {recentIncidents.length}
+                  </p>
+                </div>
+                <Activity className="h-8 w-8 text-blue-400 opacity-60" />
+              </div>
+            </CardContent>
+          </Card>
 
-            <Card className="bg-card/60 border-border/50 backdrop-blur-sm metric-card">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Logs</CardTitle>
-                <Eye className="h-5 w-5 text-cyan-400" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-4xl font-bold text-cyan-300">2M</div>
-                <p className="text-xs text-muted-foreground mt-1">Events processed</p>
-              </CardContent>
-            </Card>
+          <Card className="border-green-400/50 bg-green-500/10 backdrop-blur-sm">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-green-200 text-sm font-medium">Response Time</p>
+                  <p className="text-3xl font-bold text-green-400">2.3m</p>
+                </div>
+                <Clock className="h-8 w-8 text-green-400 opacity-60" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-            <Card className="bg-card/60 border-border/50 backdrop-blur-sm metric-card">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Avg Response</CardTitle>
-                <Clock className="h-5 w-5 text-green-400" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-4xl font-bold text-green-300">3K</div>
-                <p className="text-xs text-muted-foreground mt-1">Milliseconds</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Security Signals by Severity */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <Card className="bg-cyan-400/20 border-cyan-400/40 backdrop-blur-sm">
-              <CardContent className="p-6 text-center">
-                <div className="text-3xl font-bold text-cyan-200">5</div>
-                <p className="text-sm text-cyan-300 font-medium">INFOs</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-yellow-400/20 border-yellow-400/40 backdrop-blur-sm">
-              <CardContent className="p-6 text-center">
-                <div className="text-3xl font-bold text-yellow-200">2</div>
-                <p className="text-sm text-yellow-300 font-medium">LOWs</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-orange-400/20 border-orange-400/40 backdrop-blur-sm">
-              <CardContent className="p-6 text-center">
-                <div className="text-3xl font-bold text-orange-200">1</div>
-                <p className="text-sm text-orange-300 font-medium">MEDIUMs</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-red-400/20 border-red-400/40 backdrop-blur-sm">
-              <CardContent className="p-6 text-center">
-                <div className="text-3xl font-bold text-red-200">2</div>
-                <p className="text-sm text-red-300 font-medium">HIGHs</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-red-500/30 border-red-500/50 backdrop-blur-sm">
-              <CardContent className="p-6 text-center">
-                <div className="text-3xl font-bold text-red-100">3</div>
-                <p className="text-sm text-red-200 font-medium">CRITICALs</p>
-              </CardContent>
-            </Card>
-          </div>
-
+        {/* Recent Incidents & Quick Actions */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Recent Incidents */}
           <Card className="bg-card/60 border-border/50 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle className="text-foreground">Recent Security Incidents</CardTitle>
-              <CardDescription className="text-muted-foreground">Latest account compromise investigations</CardDescription>
+              <CardTitle className="text-foreground">Recent Incidents</CardTitle>
+              <CardDescription className="text-muted-foreground">
+                Latest security incidents requiring attention
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {loading ? (
-                  <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                    <p className="text-muted-foreground mt-2">Loading incidents...</p>
-                  </div>
-                ) : recentIncidents.length === 0 ? (
-                  <div className="text-center py-8">
-                    <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">No incidents detected.</p>
-                    <p className="text-sm text-muted-foreground mt-2">Click "Scenario Demo" to generate sample security incidents.</p>
-                  </div>
-                ) : (
-                  recentIncidents.map((incident) => (
-                  <div 
-                    key={incident.id}
-                    className="flex items-center justify-between p-4 border border-border/50 rounded-lg hover:bg-muted/30 transition-colors backdrop-blur-sm"
-                  >
-                    <div className="flex items-center space-x-4">
-                      <div className="w-2 h-8 bg-primary rounded-full pulse-glow"></div>
-                      <div>
-                        <h3 className="font-medium text-foreground">{incident.type}</h3>
-                        <p className="text-sm text-muted-foreground">{incident.createdAt}</p>
+              {loading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="animate-pulse">
+                      <div className="h-4 bg-muted/30 rounded w-3/4 mb-2"></div>
+                      <div className="h-3 bg-muted/20 rounded w-1/2"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : recentIncidents.length > 0 ? (
+                <div className="space-y-4">
+                  {recentIncidents.map((incident) => (
+                    <Link 
+                      key={incident.id} 
+                      href={`/incident/${incident.id}`}
+                      className="block p-4 rounded-lg border border-border/50 hover:bg-muted/30 transition-colors"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h4 className="font-medium text-foreground">{incident.type}</h4>
+                          <p className="text-sm text-muted-foreground">{incident.createdAt}</p>
+                        </div>
+                        <div className="flex space-x-2">
+                          <Badge className={getSeverityColor(incident.severity)}>
+                            {incident.severity}
+                          </Badge>
+                          <Badge className={getStatusColor(incident.status)}>
+                            {incident.status}
+                          </Badge>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center space-x-3">
-                      <Badge className={getSeverityColor(incident.severity)}>
-                        {incident.severity}
-                      </Badge>
-                      <Badge className={getStatusColor(incident.status)}>
-                        {incident.status}
-                      </Badge>
-                      <Button variant="outline" size="sm" asChild className="border-primary/40 hover:bg-primary/20 text-foreground">
-                        <Link href={`/incident/${incident.id}`}>
-                          Investigate
-                        </Link>
-                      </Button>
-                    </div>
-                  </div>
-                  ))
-                )}
-              </div>
+                    </Link>
+                  ))}
+                  <Button variant="outline" asChild className="w-full border-primary/40 hover:bg-primary/20 text-foreground">
+                    <Link href="/incidents">
+                      View All Incidents
+                    </Link>
+                  </Button>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground mb-4">No recent incidents</p>
+                  <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Test Incident
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
 

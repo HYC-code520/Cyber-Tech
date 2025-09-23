@@ -13,11 +13,15 @@ export async function POST(request: NextRequest) {
                      '192.168.1.100' // Demo IP for local testing
     const userAgent = request.headers.get('user-agent') || 'unknown-browser'
 
-    console.log(`Login attempt: ${email} from ${ipAddress}`)
+    console.log(`🔐 Login attempt: ${email} from ${ipAddress}`)
+
+    // Check current attempt count before processing
+    const currentAttempts = attackDetector.getAttemptCount(email)
+    console.log(`📊 Current attempts for ${email}: ${currentAttempts}`)
 
     // Check if account is already locked
     if (userManager.isAccountLocked(email)) {
-      console.log(`Blocked login attempt for locked account: ${email}`)
+      console.log(`🚫 Blocked login attempt for locked account: ${email}`)
       return NextResponse.json({
         success: false,
         error: 'ACCOUNT_LOCKED',
@@ -34,13 +38,13 @@ export async function POST(request: NextRequest) {
       const attemptCount = await attackDetector.recordAttempt(email, ipAddress, userAgent)
       userManager.recordFailedAttempt(email)
 
-      console.log(`Failed login attempt ${attemptCount} for ${email}`)
+      console.log(`❌ Failed login attempt ${attemptCount} for ${email}`)
 
       // Analyze threat level and patterns
       const threatLevel = attackDetector.getThreatLevel(attemptCount)
       const pattern = attackDetector.analyzePattern(email)
 
-      console.log(`Threat level: ${threatLevel}, Pattern: ${pattern?.type || 'none'}`)
+      console.log(`⚠️ Threat level: ${threatLevel}, Pattern: ${pattern?.type || 'none'}`)
 
       switch (threatLevel) {
         case 'MEDIUM':
@@ -140,7 +144,7 @@ export async function POST(request: NextRequest) {
             ]
           })
 
-          console.log(`Account locked for ${email}, incident created: ${incident.id}`)
+          console.log(`🔒 Account locked for ${email}, incident created: ${incident.id}`)
 
           return NextResponse.json({
             success: false,
@@ -163,8 +167,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Success case (won't happen in demo mode)
-    console.log(`Successful login for ${email}`)
+    // Success case (won't happen in demo mode, but if it did...)
+    console.log(`✅ Successful login for ${email}`)
+    // Clear attempts on successful login
+    attackDetector.clearAttempts(email)
+    
     return NextResponse.json({
       success: true,
       message: 'Login successful',
@@ -172,7 +179,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Login API error:', error)
+    console.error('💥 Login API error:', error)
     return NextResponse.json({
       success: false,
       error: 'INTERNAL_ERROR',

@@ -178,7 +178,7 @@ export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState('')
   const [activeUsers, setActiveUsers] = useState(0)
 
-  // Check account status and load stats on mount
+  // Load persisted attempt count on mount
   useEffect(() => {
     const checkAccountStatus = async () => {
       const email = localStorage.getItem('demo-email')
@@ -190,6 +190,20 @@ export default function LoginPage() {
           if (data.isLocked) {
             setIsLocked(true)
             setAlertLevel('critical')
+          }
+
+          // Load the current attempt count from localStorage
+          const storedAttempts = localStorage.getItem(`attempts-${email}`)
+          if (storedAttempts) {
+            const count = parseInt(storedAttempts, 10)
+            setAttempts(count)
+            
+            // Set alert level based on stored attempts
+            if (count >= 5) {
+              setAlertLevel('critical')
+            } else if (count >= 3) {
+              setAlertLevel('warning')
+            }
           }
         } catch (error) {
           console.log('Account status check failed:', error)
@@ -233,6 +247,9 @@ export default function LoginPage() {
       const data = await response.json()
 
       if (data.success) {
+        // Clear attempts on successful login
+        localStorage.removeItem(`attempts-${email}`)
+        setAttempts(0)
         alert('Login successful!')
         return
       }
@@ -244,15 +261,23 @@ export default function LoginPage() {
         return
       }
 
-      setAttempts(data.attempts || attempts + 1)
+      // Use the attempts count from the API response (this is the authoritative source)
+      const currentAttempts = data.attempts || 1
+      setAttempts(currentAttempts)
       
-      if (data.attempts >= 5) {
+      // Persist attempt count to localStorage for this email
+      localStorage.setItem(`attempts-${email}`, currentAttempts.toString())
+      
+      // Set alert level based on current attempts
+      if (currentAttempts >= 5) {
         setAlertLevel('critical')
-      } else if (data.attempts >= 3) {
+      } else if (currentAttempts >= 3) {
         setAlertLevel('warning')
       }
 
       setErrorMessage(data.message || 'Invalid email or password. Please try again.')
+
+      console.log(`📊 Login attempt #${currentAttempts} for ${email}`)
 
     } catch (error) {
       setErrorMessage('Connection error. Please try again.')
