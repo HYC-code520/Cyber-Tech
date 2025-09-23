@@ -536,39 +536,41 @@ export function AIEnhancedRecommendationPane({
                         </div>
 
                         {/* Action Button */}
-                        <div className="pt-4 border-t border-border/30">
-                          <Button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              onExecuteAction?.(rec.action)
-                            }}
-                            disabled={rec.applied || isExecuting || isEnhancing}
-                            className="w-full h-12 text-base font-medium"
-                            variant={rec.applied ? "outline" : "default"}
-                          >
-                            {rec.applied ? (
-                              <>
-                                <CheckCircle2 className="h-5 w-5 mr-2" />
-                                Action Applied Successfully
-                              </>
-                            ) : isExecuting ? (
-                              <>
-                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                                Executing Action...
-                              </>
-                            ) : isEnhancing ? (
-                              <>
-                                <Brain className="h-5 w-5 mr-2 animate-pulse" />
-                                AI Processing...
-                              </>
-                            ) : (
-                              <>
-                                <Shield className="h-5 w-5 mr-2" />
-                                Execute Security Action
-                              </>
-                            )}
-                          </Button>
-                        </div>
+                        {currentStep === 'contain' && onExecuteAction && !rec.applied && (
+                          <div className="pt-4 border-t border-border/30">
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onExecuteAction?.(rec.action)
+                              }}
+                              disabled={rec.applied || isExecuting || isEnhancing}
+                              className="w-full h-12 text-base font-medium"
+                              variant={rec.applied ? "outline" : "default"}
+                            >
+                              {rec.applied ? (
+                                <>
+                                  <CheckCircle2 className="h-5 w-5 mr-2" />
+                                  Action Applied Successfully
+                                </>
+                              ) : isExecuting ? (
+                                <>
+                                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                                  Executing Action...
+                                </>
+                              ) : isEnhancing ? (
+                                <>
+                                  <Brain className="h-5 w-5 mr-2 animate-pulse" />
+                                  AI Processing...
+                                </>
+                              ) : (
+                                <>
+                                  <Shield className="h-5 w-5 mr-2" />
+                                  Execute Security Action
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
