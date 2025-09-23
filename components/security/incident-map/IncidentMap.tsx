@@ -65,8 +65,8 @@ const Circle = dynamic(
 
 export default function IncidentMap({
   incidents = [],
-  center = [20, 0],
-  zoom = 2
+  center = [40.7128, -74.0060], // Center on Your Organization (New York)
+  zoom = 2.5
 }: MapProps) {
   const [selectedIncident, setSelectedIncident] = useState<IncidentLocation | null>(null)
   const [mapReady, setMapReady] = useState(false)
@@ -192,7 +192,7 @@ export default function IncidentMap({
       <MapContainer
         center={center}
         zoom={zoom}
-        minZoom={1}
+        minZoom={2.5}
         maxZoom={10}
         maxBounds={worldBounds}
         maxBoundsViscosity={1.0}
