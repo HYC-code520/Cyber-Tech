@@ -53,7 +53,24 @@ export default function DemoLobbyPage() {
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-full opacity-30"></div>
       </div>
 
-      <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
+      {/* Sticky top navigation */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200 shadow-sm">
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Shield className="h-6 w-6 text-blue-600" />
+            <span className="font-semibold text-gray-900">Security Demo</span>
+          </div>
+          <Link href="/login">
+            <Button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-6 py-2 shadow-md hover:shadow-lg transition-all">
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Open Portal
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* Add top padding to main content */}
+      <div className="relative z-10 min-h-screen flex items-center justify-center p-4 pt-20">
         <div className="max-w-4xl mx-auto">
           {/* Header Section */}
           <div className="text-center mb-12">
@@ -66,6 +83,17 @@ export default function DemoLobbyPage() {
             <p className="text-xl text-gray-600 mb-6 max-w-2xl mx-auto">
               Experience Real-Time Cybersecurity Protection in Action
             </p>
+            
+            {/* Primary CTA Button */}
+            <div className="mb-8">
+              <Link href="/login">
+                <Button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white text-xl px-8 py-4 shadow-lg hover:shadow-xl transition-all transform hover:scale-105 rounded-lg">
+                  <ExternalLink className="h-6 w-6 mr-3" />
+                  Start Demo Now
+                </Button>
+              </Link>
+            </div>
+
             <div className="flex items-center justify-center gap-4">
               <Badge className="bg-green-100 text-green-800 border-green-300 px-4 py-2 text-base font-medium shadow-sm">
                 <Users className="h-4 w-4 mr-2" />
@@ -226,6 +254,15 @@ export default function DemoLobbyPage() {
                 </div>
               </CardContent>
             </Card>
+          </div>
+
+          {/* Floating Action Button for Mobile/Quick Access */}
+          <div className="fixed bottom-6 right-6 z-50 lg:hidden">
+            <Link href="/login">
+              <Button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-6 py-4 shadow-2xl hover:shadow-3xl transition-all transform hover:scale-105 rounded-full">
+                <ExternalLink className="h-5 w-5" />
+              </Button>
+            </Link>
           </div>
 
           {/* Footer */}
