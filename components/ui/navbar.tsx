@@ -3,13 +3,14 @@
 import { useState, useRef, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { Shield, Home, FileText, Play, QrCode, MonitorSpeaker, Eye, Activity, Palette, Menu, X } from 'lucide-react'
+import { Shield, Home, FileText, Play, QrCode, MonitorSpeaker, Eye, Activity, Palette, Menu, X, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface NavItem {
   href: string
   label: string
   icon?: React.ComponentType<{ className?: string }>
+  openInNewWindow?: boolean // Add this property
 }
 
 const navItems: NavItem[] = [
@@ -17,7 +18,7 @@ const navItems: NavItem[] = [
   { href: '/incidents', label: 'All Incidents', icon: Eye },
   { href: '/reports', label: 'Reports', icon: FileText },
   { href: '/simulate', label: 'Simulate', icon: Play },
-  { href: '/demo-lobby', label: 'Live Demo', icon: QrCode },
+  { href: '/demo-lobby', label: 'Live Demo', icon: QrCode, openInNewWindow: true }, // Set to open in new window
   { href: '/demo-control', label: 'Demo Control', icon: MonitorSpeaker },
   { href: '/design-system', label: 'Design System', icon: Palette },
 ]
@@ -40,6 +41,15 @@ export function Navbar({ subtitle = "Security Monitoring - Account Compromise In
 
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false)
+  }
+
+  // Function to handle new window opening
+  const handleNavClick = (e: React.MouseEvent, item: NavItem) => {
+    if (item.openInNewWindow) {
+      e.preventDefault()
+      window.open(item.href, '_blank', 'noopener,noreferrer')
+      closeMobileMenu() // Close mobile menu if open
+    }
   }
 
   // Close mobile menu when clicking outside
@@ -86,6 +96,7 @@ export function Navbar({ subtitle = "Security Monitoring - Account Compromise In
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={(e) => handleNavClick(e, item)}
                 className={`flex items-center space-x-2 px-3 xl:px-4 py-2 rounded-lg transition-colors whitespace-nowrap ${
                   active
                     ? 'text-foreground font-medium bg-primary/20 border border-primary/30'
@@ -95,6 +106,9 @@ export function Navbar({ subtitle = "Security Monitoring - Account Compromise In
                 {Icon && <Icon className="h-4 w-4 flex-shrink-0" />}
                 <span className="hidden xl:inline">{item.label}</span>
                 <span className="xl:hidden text-xs">{item.label.split(' ')[0]}</span>
+                {item.openInNewWindow && (
+                  <ExternalLink className="h-3 w-3 flex-shrink-0 opacity-60" />
+                )}
               </Link>
             )
           })}
@@ -153,7 +167,7 @@ export function Navbar({ subtitle = "Security Monitoring - Account Compromise In
                   <Link
                     key={item.href}
                     href={item.href}
-                    onClick={closeMobileMenu}
+                    onClick={(e) => handleNavClick(e, item)}
                     className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors w-full ${
                       active
                         ? 'text-foreground font-medium bg-primary/20 border border-primary/30'
@@ -162,6 +176,9 @@ export function Navbar({ subtitle = "Security Monitoring - Account Compromise In
                   >
                     {Icon && <Icon className="h-5 w-5 flex-shrink-0" />}
                     <span className="text-base">{item.label}</span>
+                    {item.openInNewWindow && (
+                      <ExternalLink className="h-4 w-4 flex-shrink-0 opacity-60 ml-auto" />
+                    )}
                   </Link>
                 )
               })}

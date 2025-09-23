@@ -279,65 +279,99 @@ export default function IncidentMap({
               }}
             >
               <Popup>
-                <div className="p-3 min-w-[250px]">
-                  <div className="flex items-start justify-between mb-3">
-                    <h3 className="font-bold text-sm">Security Incident</h3>
+                <div className="p-3 min-w-[280px] max-w-[320px]">
+                  {/* Header Section - More Compact */}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2.5 h-2.5 rounded-full ${
+                        incident.severity === 'critical' ? 'bg-red-500' :
+                        incident.severity === 'high' ? 'bg-orange-500' :
+                        incident.severity === 'medium' ? 'bg-yellow-500' :
+                        'bg-green-500'
+                      } animate-pulse`}></div>
+                      <h3 className="font-semibold text-sm text-gray-900">Security Incident</h3>
+                    </div>
                     <Badge
                       className={`
-                        ${incident.severity === 'critical' ? 'bg-red-500/20 text-red-300' :
-                          incident.severity === 'high' ? 'bg-orange-500/20 text-orange-300' :
-                          incident.severity === 'medium' ? 'bg-yellow-500/20 text-yellow-300' :
-                          'bg-green-500/20 text-green-300'}
+                        font-medium px-2 py-0.5 text-xs uppercase tracking-wide border
+                        ${incident.severity === 'critical' ? 'bg-red-50 text-red-700 border-red-200' :
+                          incident.severity === 'high' ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                          incident.severity === 'medium' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
+                          'bg-green-50 text-green-700 border-green-200'}
                       `}
                     >
                       {incident.severity}
                     </Badge>
                   </div>
 
-                  <div className="space-y-2 text-xs">
-                    <div className="flex items-center gap-2">
-                      <Globe className="h-3 w-3 text-muted-foreground" />
-                      <span>{incident.city}, {incident.country}</span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Activity className="h-3 w-3 text-muted-foreground" />
-                      <span>{incident.ipAddress}</span>
-                      {incident.isTOR && (
-                        <Badge className="text-xs bg-purple-500/20 text-purple-300">TOR</Badge>
-                      )}
-                      {incident.isVPN && (
-                        <Badge className="text-xs bg-blue-500/20 text-blue-300">VPN</Badge>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <AlertTriangle className="h-3 w-3 text-muted-foreground" />
-                      <span>Type: {incident.type.replace('_', ' ')}</span>
-                    </div>
-
-                    {incident.failedAttempts && (
-                      <div className="flex items-center gap-2">
-                        <Shield className="h-3 w-3 text-muted-foreground" />
-                        <span>{incident.failedAttempts} failed attempts</span>
+                  {/* Main Content - Reduced Spacing */}
+                  <div className="space-y-2">
+                    {/* Location - Compact Layout */}
+                    <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md">
+                      <Globe className="h-3.5 w-3.5 text-blue-600 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-xs text-gray-900 truncate">{incident.city}, {incident.country}</div>
                       </div>
-                    )}
+                    </div>
 
-                    <div className="pt-2 border-t border-border/50">
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Threat Score:</span>
-                        <span className={`font-bold ${
-                          incident.threatScore > 0.7 ? 'text-red-400' :
-                          incident.threatScore > 0.4 ? 'text-orange-400' :
-                          'text-yellow-400'
+                    {/* IP Address & Flags - Single Line */}
+                    <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md">
+                      <Activity className="h-3.5 w-3.5 text-purple-600 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-xs text-gray-900 font-mono truncate">{incident.ipAddress}</div>
+                      </div>
+                      <div className="flex gap-1">
+                        {incident.isTOR && (
+                          <Badge className="text-xs px-1.5 py-0.5 bg-purple-100 text-purple-700 border border-purple-200">TOR</Badge>
+                        )}
+                        {incident.isVPN && (
+                          <Badge className="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 border border-blue-200">VPN</Badge>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Attack Type - Inline */}
+                    <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md">
+                      <AlertTriangle className="h-3.5 w-3.5 text-red-600 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-xs text-gray-900 capitalize truncate">{incident.type.replace('_', ' ')}</div>
+                      </div>
+                      {incident.failedAttempts && (
+                        <div className="text-xs text-gray-600 font-medium">
+                          {incident.failedAttempts} attempts
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Threat Score - Compact */}
+                    <div className="pt-2 border-t border-gray-200">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-medium text-gray-700">Threat Score</span>
+                        <span className={`text-sm font-bold ${
+                          incident.threatScore > 0.7 ? 'text-red-600' :
+                          incident.threatScore > 0.4 ? 'text-orange-600' :
+                          'text-yellow-600'
                         }`}>
                           {(incident.threatScore * 100).toFixed(0)}%
                         </span>
                       </div>
+                      <div className="w-full bg-gray-200 rounded-full h-1.5">
+                        <div 
+                          className={`h-1.5 rounded-full transition-all duration-300 ${
+                            incident.threatScore > 0.7 ? 'bg-red-500' :
+                            incident.threatScore > 0.4 ? 'bg-orange-500' :
+                            'bg-yellow-500'
+                          }`}
+                          style={{ width: `${incident.threatScore * 100}%` }}
+                        ></div>
+                      </div>
                     </div>
 
-                    <div className="text-xs text-muted-foreground">
-                      {new Date(incident.timestamp).toLocaleString()}
+                    {/* Timestamp - Minimal */}
+                    <div className="pt-1 text-center">
+                      <div className="text-xs text-gray-500">
+                        {new Date(incident.timestamp).toLocaleString()}
+                      </div>
                     </div>
                   </div>
                 </div>
