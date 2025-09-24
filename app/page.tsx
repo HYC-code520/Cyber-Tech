@@ -77,16 +77,26 @@ export default function Dashboard() {
     linkElement.click()
   }
 
-  useEffect(() => {
-    // Fetch recent incidents for the list
+  const fetchRecentIncidents = () => {
     fetch('/api/incidents')
       .then(res => res.json())
       .then(data => {
         // Handle both array and error responses
         if (Array.isArray(data)) {
-          const formattedIncidents = data.slice(0, 3).map((incident: Record<string, any>) => ({
+          console.log('📋 All incidents from API:', data.map(i => ({ id: i.id.slice(-8), status: i.status, type: i.type })))
+
+          // Filter out closed and documented incidents - only show active ones
+          const activeIncidents = data.filter((incident: Record<string, any>) => {
+            const isActive = incident.status !== 'closed' && incident.status !== 'documented'
+            console.log(`📋 Incident ${incident.id.slice(-8)}: status="${incident.status}" isActive=${isActive}`)
+            return isActive
+          })
+
+          console.log('📋 Active incidents after filter:', activeIncidents.map(i => ({ id: i.id.slice(-8), status: i.status })))
+
+          const formattedIncidents = activeIncidents.slice(0, 3).map((incident: Record<string, any>) => ({
             id: incident.id,
-            type: incident.type ? incident.type.replace('_', ' ').split(' ').map((word: string) => 
+            type: incident.type ? incident.type.replace('_', ' ').split(' ').map((word: string) =>
               word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : 'Unknown Incident',
             severity: incident.severity,
             status: incident.status,
@@ -104,6 +114,30 @@ export default function Dashboard() {
         setRecentIncidents([])
         setLoading(false)
       })
+  }
+
+  useEffect(() => {
+    // Initial fetch
+    fetchRecentIncidents()
+
+    // Set up auto-refresh every 30 seconds
+    const interval = setInterval(() => {
+      fetchRecentIncidents()
+    }, 30000)
+
+    // Refresh when page gains focus (e.g., user returns from incident page)
+    const handleFocus = () => {
+      fetchRecentIncidents()
+      fetchMapIncidents()
+    }
+
+    window.addEventListener('focus', handleFocus)
+
+    // Clean up
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener('focus', handleFocus)
+    }
   }, [])
 
   useEffect(() => {
@@ -271,9 +305,9 @@ export default function Dashboard() {
           {/* Recent Incidents */}
           <Card className="bg-card/60 border-border/50 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle className="text-foreground">Recent Incidents</CardTitle>
+              <CardTitle className="text-foreground">Active Incidents</CardTitle>
               <CardDescription className="text-muted-foreground">
-                Latest security incidents requiring attention
+                Open security incidents requiring attention
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -318,10 +352,12 @@ export default function Dashboard() {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-muted-foreground mb-4">No recent incidents</p>
-                  <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Test Incident
+                  <p className="text-muted-foreground mb-4">No active incidents</p>
+                  <Button size="sm" asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                    <Link href="/simulate">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Test Incident
+                    </Link>
                   </Button>
                 </div>
               )}

@@ -34,10 +34,11 @@ export async function POST(
     // For demo: simplified step mapping
     const stepToStateMap: Record<string, string> = {
       'trigger': 'triggered',
-      'confirm': 'confirmed', 
+      'confirm': 'confirmed',
       'classify': 'classified',
       'contain': 'contained',
-      'recover': 'recovered'
+      'recover': 'recovered',
+      'closed': 'closed'
     }
 
     const newStep = toStep || incident.currentStep

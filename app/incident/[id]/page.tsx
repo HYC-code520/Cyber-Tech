@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { StepIndicator } from '@/components/wizard/StepIndicator'
 import { AIEnhancedRecommendationPane } from '@/components/recommendations/AIEnhancedRecommendationPane'
-import { ChevronLeft, ChevronRight, User, UserCheck, AlertTriangle, Shield, RefreshCw, Home, FileText, Play, MonitorSpeaker, QrCode, GripVertical } from 'lucide-react'
+import { ChevronLeft, ChevronRight, User, UserCheck, AlertTriangle, Shield, RefreshCw, Home, FileText, Play, MonitorSpeaker, QrCode, GripVertical, X } from 'lucide-react'
 import Link from 'next/link'
 import { Navbar } from '@/components/ui/navbar'
 
@@ -194,6 +194,51 @@ export default function IncidentPage() {
     }
   }
 
+  const markAsFalsePositive = async () => {
+    if (!incident) return
+
+    console.log('Marking incident as false positive and closing...')
+
+    setTransitionLoading(true)
+    setError(null)
+
+    try {
+      // Transition directly to closed state
+      const response = await fetch(`/api/incidents/${incident.id}/transition`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          toStep: 'closed',
+          userId: 'analyst',
+          reason: 'Incident marked as false positive'
+        })
+      })
+
+      let responseData
+      try {
+        responseData = await response.json()
+      } catch (jsonError) {
+        console.error('Failed to parse JSON response:', jsonError)
+        responseData = { error: 'Invalid server response' }
+      }
+
+      if (response.ok) {
+        console.log('Incident successfully closed as false positive')
+        // Redirect to dashboard or show success message
+        window.location.href = '/'
+      } else {
+        console.error('Failed to close incident:', responseData)
+        const errorMessage = responseData?.error || responseData?.details || 'Failed to close incident'
+        setError(`Error: ${errorMessage}`)
+      }
+    } catch (error) {
+      console.error('Error closing incident:', error)
+      setError('Network error while closing incident')
+    } finally {
+      setTransitionLoading(false)
+    }
+  }
+
   const transitionToNextStep = async () => {
     if (!incident) return
 
@@ -219,7 +264,13 @@ export default function IncidentPage() {
         })
       })
 
-      const responseData = await response.json()
+      let responseData
+      try {
+        responseData = await response.json()
+      } catch (jsonError) {
+        console.error('Failed to parse JSON response:', jsonError)
+        responseData = { error: 'Invalid server response' }
+      }
       console.log('Transition response:', response.status, responseData) // Debug log
 
       if (response.ok) {
@@ -227,7 +278,8 @@ export default function IncidentPage() {
         console.log('Transition successful')
       } else {
         console.error('Transition failed:', responseData)
-        setError(`Transition failed: ${responseData.error || 'Unknown error'}`)
+        const errorMessage = responseData?.error || responseData?.details || 'Unknown error'
+        setError(`Transition failed: ${errorMessage}`)
       }
     } catch (error) {
       console.error('Error transitioning step:', error)
@@ -261,7 +313,13 @@ export default function IncidentPage() {
         })
       })
 
-      const responseData = await response.json()
+      let responseData
+      try {
+        responseData = await response.json()
+      } catch (jsonError) {
+        console.error('Failed to parse JSON response:', jsonError)
+        responseData = { error: 'Invalid server response' }
+      }
       console.log('Previous transition response:', response.status, responseData)
 
       if (response.ok) {
@@ -361,6 +419,28 @@ export default function IncidentPage() {
                 <p className="text-muted-foreground">
                   The system has analyzed the detection indicators and recommends proceeding with the incident response process.
                 </p>
+              </div>
+
+              {/* False Positive Option */}
+              <div className="mt-6 p-4 border border-yellow-400/30 bg-yellow-400/10 rounded-lg">
+                <div className="flex items-start space-x-3">
+                  <AlertTriangle className="h-5 w-5 text-yellow-400 mt-0.5" />
+                  <div className="flex-1">
+                    <h4 className="font-medium text-foreground mb-1">Not a real threat?</h4>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      If after review you determine this is a false positive or normal behavior, you can close this incident.
+                    </p>
+                    <Button
+                      variant="outline"
+                      onClick={() => markAsFalsePositive()}
+                      className="border-yellow-400/50 hover:bg-yellow-400/20 text-yellow-200"
+                      disabled={transitionLoading}
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Mark as False Positive & Close
+                    </Button>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
