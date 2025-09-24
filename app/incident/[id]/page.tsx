@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { StepIndicator } from '@/components/wizard/StepIndicator'
 import { AIEnhancedRecommendationPane } from '@/components/recommendations/AIEnhancedRecommendationPane'
-import { ChevronLeft, ChevronRight, User, UserCheck, AlertTriangle, Shield, RefreshCw, Home, FileText, Play, MonitorSpeaker, QrCode, GripVertical, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, User, UserCheck, AlertTriangle, Shield, RefreshCw, Home, FileText, Play, MonitorSpeaker, QrCode, GripVertical, X, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
 import { Navbar } from '@/components/ui/navbar'
 
@@ -600,11 +600,11 @@ export default function IncidentPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <p className="text-muted-foreground">
+              <p className="text-muted-foreground">
                   Incident has been contained. Begin recovery procedures to restore normal operations.
                 </p>
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4 mb-4">
                   <div className="p-3 bg-green-500/20 border border-green-400/40 rounded-lg backdrop-blur-sm">
                     <h4 className="font-medium text-green-200">Threat Neutralized</h4>
                     <p className="text-sm text-green-300">Containment actions successfully executed</p>
@@ -613,6 +613,25 @@ export default function IncidentPage() {
                   <div className="p-3 bg-blue-500/20 border border-blue-400/40 rounded-lg backdrop-blur-sm">
                     <h4 className="font-medium text-blue-200">Ready for Recovery</h4>
                     <p className="text-sm text-blue-300">Systems prepared for restoration</p>
+                  </div>
+                </div>
+
+                {/* Completion Notice */}
+                <div className="p-4 bg-primary/10 border border-primary/30 rounded-lg backdrop-blur-sm">
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle className="h-5 w-5 text-primary mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="font-medium text-primary mb-1">Ready to Complete</h4>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        All incident response steps have been completed. Click "Complete Incident" below to:
+                      </p>
+                      <ul className="text-sm text-muted-foreground space-y-1">
+                        <li>• Generate incident documentation</li>
+                        <li>• Archive all evidence and logs</li>
+                        <li>• Close the incident ticket</li>
+                        <li>• Update security metrics</li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -670,6 +689,51 @@ export default function IncidentPage() {
       document.body.style.userSelect = 'auto'
     }
   }, [isResizing])
+
+  const completeIncident = async () => {
+    if (!incident) return
+
+    console.log('Completing incident and closing...')
+
+    setTransitionLoading(true)
+    setError(null)
+
+    try {
+      // Transition to closed state
+      const response = await fetch(`/api/incidents/${incident.id}/transition`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          toStep: 'closed',
+          userId: 'analyst',
+          reason: 'Incident response completed successfully'
+        })
+      })
+
+      let responseData
+      try {
+        responseData = await response.json()
+      } catch (jsonError) {
+        console.error('Failed to parse JSON response:', jsonError)
+        responseData = { error: 'Invalid server response' }
+      }
+
+      if (response.ok) {
+        console.log('Incident successfully completed and closed')
+        // Redirect to dashboard with success message
+        window.location.href = '/?completed=true'
+      } else {
+        console.error('Failed to complete incident:', responseData)
+        const errorMessage = responseData?.error || responseData?.details || 'Failed to complete incident'
+        setError(`Error: ${errorMessage}`)
+      }
+    } catch (error) {
+      console.error('Error completing incident:', error)
+      setError('Network error while completing incident')
+    } finally {
+      setTransitionLoading(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -857,15 +921,32 @@ export default function IncidentPage() {
               </div>
             </div>
             
-            <Button 
-              onClick={transitionToNextStep}
-              disabled={currentStepIndex >= steps.length - 1 || transitionLoading}
-              className="bg-primary hover:bg-primary/90 disabled:opacity-50"
-              title={currentStepIndex >= steps.length - 1 ? "Already at final step" : "Go to next step"}
-            >
-              {transitionLoading ? 'Loading...' : currentStepIndex >= steps.length - 1 ? 'Complete' : 'Next'}
-              <ChevronRight className="h-4 w-4 ml-2" />
-            </Button>
+            {/* Conditional rendering for the right button */}
+            {currentStepIndex >= steps.length - 1 ? (
+              <Button 
+                onClick={completeIncident}
+                disabled={transitionLoading}
+                className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white"
+                title="Complete incident and close"
+              >
+                {transitionLoading ? 'Completing...' : (
+                  <>
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Complete Incident
+                  </>
+                )}
+              </Button>
+            ) : (
+              <Button 
+                onClick={transitionToNextStep}
+                disabled={transitionLoading}
+                className="bg-primary hover:bg-primary/90 disabled:opacity-50"
+                title="Go to next step"
+              >
+                {transitionLoading ? 'Loading...' : 'Next'}
+                <ChevronRight className="h-4 w-4 ml-2" />
+              </Button>
+            )}
           </div>
         </div>
 
