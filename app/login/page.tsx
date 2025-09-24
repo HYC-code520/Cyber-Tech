@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { Shield, AlertTriangle, Lock, ExternalLink, Users, Activity, Eye, EyeOff } from 'lucide-react'
+import { Shield, AlertTriangle, Lock, ExternalLink, Users, Activity, Eye, EyeOff, X } from 'lucide-react'
 import Link from 'next/link'
 
 interface LoginFormProps {
@@ -93,9 +93,16 @@ interface AttemptCounterProps {
   current: number
   maximum: number
   alertLevel: 'normal' | 'warning' | 'critical'
+  hasAttempted: boolean
+  onDismiss?: () => void // NEW: Allow dismissing the counter
 }
 
-function AttemptCounter({ current, maximum, alertLevel }: AttemptCounterProps) {
+function AttemptCounter({ current, maximum, alertLevel, hasAttempted, onDismiss }: AttemptCounterProps) {
+  // 🔧 STRICT FIX: Only show if user has attempted AND there are actual attempts
+  if (!hasAttempted || current <= 0) {
+    return null
+  }
+
   const getStyles = () => {
     switch (alertLevel) {
       case 'critical': 
@@ -119,10 +126,6 @@ function AttemptCounter({ current, maximum, alertLevel }: AttemptCounterProps) {
   }
 
   const getMessage = () => {
-    if (current === 0) {
-      return "Enter any email and password to begin the security demonstration"
-    }
-    
     if (alertLevel === 'critical') {
       return "Account will be locked after 5 failed attempts. Security team notified."
     }
@@ -135,7 +138,7 @@ function AttemptCounter({ current, maximum, alertLevel }: AttemptCounterProps) {
   }
 
   return (
-    <div className={`mt-6 p-4 rounded-xl border-2 ${getStyles()} shadow-sm transition-all duration-300`}>
+    <div className={`mt-6 p-4 rounded-xl border-2 ${getStyles()} shadow-sm transition-all duration-300 animate-in slide-in-from-top-2`}>
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           {getIcon()}
@@ -144,22 +147,35 @@ function AttemptCounter({ current, maximum, alertLevel }: AttemptCounterProps) {
           </span>
         </div>
         
-        {/* Visual progress bar */}
-        <div className="flex gap-1">
-          {Array.from({ length: maximum }, (_, i) => (
-            <div
-              key={i}
-              className={`w-3 h-3 rounded-full border-2 transition-colors ${
-                i < current 
-                  ? alertLevel === 'critical' 
-                    ? 'bg-red-500 border-red-600' 
-                    : alertLevel === 'warning'
-                    ? 'bg-orange-500 border-orange-600'
-                    : 'bg-blue-500 border-blue-600'
-                  : 'bg-gray-200 border-gray-300'
-              }`}
-            />
-          ))}
+        <div className="flex items-center gap-2">
+          {/* Visual progress bar */}
+          <div className="flex gap-1">
+            {Array.from({ length: maximum }, (_, i) => (
+              <div
+                key={i}
+                className={`w-3 h-3 rounded-full border-2 transition-colors ${
+                  i < current 
+                    ? alertLevel === 'critical' 
+                      ? 'bg-red-500 border-red-600' 
+                      : alertLevel === 'warning'
+                      ? 'bg-orange-500 border-orange-600'
+                      : 'bg-blue-500 border-blue-600'
+                    : 'bg-gray-200 border-gray-300'
+                }`}
+              />
+            ))}
+          </div>
+          
+          {/* Dismiss button for fresh start */}
+          {onDismiss && (
+            <button
+              onClick={onDismiss}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+              title="Clear attempts and start fresh"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </div>
       
@@ -167,19 +183,17 @@ function AttemptCounter({ current, maximum, alertLevel }: AttemptCounterProps) {
         {getMessage()}
       </p>
       
-      {current > 0 && (
-        <div className="mt-2 text-xs font-medium">
-          {current < maximum ? (
-            <span className="text-gray-600">
-              {maximum - current} attempts remaining before account lockout
-            </span>
-          ) : (
-            <span className="text-red-600 font-semibold">
-              Maximum attempts reached - Account locked for security
-            </span>
-          )}
-        </div>
-      )}
+      <div className="mt-2 text-xs font-medium">
+        {current < maximum ? (
+          <span className="text-gray-600">
+            {maximum - current} attempts remaining before account lockout
+          </span>
+        ) : (
+          <span className="text-red-600 font-semibold">
+            Maximum attempts reached - Account locked for security
+          </span>
+        )}
+      </div>
     </div>
   )
 }
@@ -243,6 +257,25 @@ export default function LoginPage() {
   const [incidentId, setIncidentId] = useState<string>()
   const [errorMessage, setErrorMessage] = useState('')
   const [activeUsers, setActiveUsers] = useState(0)
+  const [hasAttempted, setHasAttempted] = useState(false)
+  const [showAttemptCounter, setShowAttemptCounter] = useState(false) // NEW: Explicit control
+
+  // 🔧 NEW: Function to clear all stored data and reset
+  const clearStoredData = () => {
+    const email = localStorage.getItem('demo-email')
+    if (email) {
+      localStorage.removeItem(`attempts-${email}`)
+    }
+    localStorage.removeItem('demo-email')
+    
+    setAttempts(0)
+    setHasAttempted(false)
+    setShowAttemptCounter(false)
+    setAlertLevel('normal')
+    setIsLocked(false)
+    setErrorMessage('')
+    setIncidentId(undefined)
+  }
 
   // Load persisted attempt count on mount
   useEffect(() => {
@@ -256,6 +289,8 @@ export default function LoginPage() {
           if (data.isLocked) {
             setIsLocked(true)
             setAlertLevel('critical')
+            setHasAttempted(true)
+            setShowAttemptCounter(true) // Show counter for locked accounts
           }
 
           // Load the current attempt count from localStorage
@@ -263,6 +298,13 @@ export default function LoginPage() {
           if (storedAttempts) {
             const count = parseInt(storedAttempts, 10)
             setAttempts(count)
+            
+            // 🔧 IMPORTANT: Only show counter if there are attempts AND user is in current session
+            // For a fresh visit, we don't want to show old attempts unless account is locked
+            if (count > 0 && data.isLocked) {
+              setHasAttempted(true)
+              setShowAttemptCounter(true)
+            }
             
             // Set alert level based on stored attempts
             if (count >= 5) {
@@ -301,6 +343,8 @@ export default function LoginPage() {
 
   const handleLoginAttempt = async (email: string, password: string) => {
     setErrorMessage('')
+    setHasAttempted(true)
+    setShowAttemptCounter(true) // Show counter after first attempt
     localStorage.setItem('demo-email', email)
 
     try {
@@ -315,10 +359,8 @@ export default function LoginPage() {
       const data = await response.json()
 
       if (data.success) {
-        // Clear attempts on successful login
-        localStorage.removeItem(`attempts-${email}`)
-        setAttempts(0)
-        setAlertLevel('normal')
+        // Clear everything on successful login
+        clearStoredData()
         alert('Login successful!')
         return
       }
@@ -330,7 +372,7 @@ export default function LoginPage() {
         return
       }
 
-      // Use the attempts count from the API response (this is the authoritative source)
+      // Use the attempts count from the API response
       const currentAttempts = data.attempts || attempts + 1
       setAttempts(currentAttempts)
       
@@ -347,7 +389,6 @@ export default function LoginPage() {
       }
 
       setErrorMessage(data.message || 'Invalid email or password. Please try again.')
-
       console.log(`📊 Login attempt #${currentAttempts} for ${email}`)
 
     } catch (error) {
@@ -412,12 +453,16 @@ export default function LoginPage() {
                     </div>
                   )}
 
-                  {/* Always show the attempt counter - this is the key fix */}
-                  <AttemptCounter 
-                    current={attempts} 
-                    maximum={5} 
-                    alertLevel={alertLevel} 
-                  />
+                  {/* 🔧 FIXED: Only show when explicitly enabled */}
+                  {showAttemptCounter && (
+                    <AttemptCounter 
+                      current={attempts} 
+                      maximum={5} 
+                      alertLevel={alertLevel}
+                      hasAttempted={hasAttempted}
+                      onDismiss={clearStoredData}
+                    />
+                  )}
                 </>
               )}
             </CardContent>
@@ -450,6 +495,18 @@ export default function LoginPage() {
               ← Back to Demo Lobby
             </Link>
           </div>
+
+          {/* 🔧 NEW: Debug/Reset button for testing */}
+          {(attempts > 0 || hasAttempted) && (
+            <div className="mt-4 text-center">
+              <button
+                onClick={clearStoredData}
+                className="text-xs text-gray-500 hover:text-gray-700 underline transition-colors"
+              >
+                Reset Demo Data
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

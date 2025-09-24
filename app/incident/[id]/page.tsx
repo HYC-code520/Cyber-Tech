@@ -340,6 +340,71 @@ export default function IncidentPage() {
     }
   }
 
+  // Add new transition function for direct step navigation
+  const transitionToStep = async (targetStepIndex: number) => {
+    if (!incident) return
+    
+    const targetStep = steps[targetStepIndex]
+    if (!targetStep) {
+      console.log('Invalid step index:', targetStepIndex)
+      return
+    }
+
+    // Don't transition if already at target step
+    if (targetStepIndex === currentStepIndex) {
+      console.log('Already at target step:', targetStep)
+      return
+    }
+
+    // Only allow transitions to completed steps, current step, or next step
+    if (targetStepIndex > currentStepIndex + 1) {
+      setError('Cannot skip ahead more than one step. Complete the current step first.')
+      return
+    }
+
+    const direction = targetStepIndex > currentStepIndex ? 'forward' : 'backward'
+    console.log(`Direct transition ${direction} from ${incident.currentStep} to ${targetStep}`)
+    
+    setTransitionLoading(true)
+    setError(null)
+    
+    try {
+      const response = await fetch(`/api/incidents/${incident.id}/transition`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          toStep: targetStep,
+          userId: 'analyst',
+          reason: `Direct ${direction} transition from ${incident.currentStep} to ${targetStep}`
+        })
+      })
+
+      let responseData
+      try {
+        responseData = await response.json()
+      } catch (jsonError) {
+        console.error('Failed to parse JSON response:', jsonError)
+        responseData = { error: 'Invalid server response' }
+      }
+      console.log('Direct transition response:', response.status, responseData)
+
+      if (response.ok) {
+        await fetchIncident()
+        console.log('Direct transition successful')
+        setError(null)
+      } else {
+        console.error('Direct transition failed:', responseData)
+        const errorMessage = responseData?.error || responseData?.details || 'Unknown error'
+        setError(`Transition failed: ${errorMessage}`)
+      }
+    } catch (error) {
+      console.error('Error in direct transition:', error)
+      setError('Network error during transition')
+    } finally {
+      setTransitionLoading(false)
+    }
+  }
+
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'critical': return 'bg-red-500/30 text-red-200 border-red-400/50'
@@ -695,6 +760,8 @@ export default function IncidentPage() {
             <StepIndicator 
               steps={steps}
               currentStep={currentStepIndex}
+              onStepClick={transitionToStep}
+              isTransitioning={transitionLoading}
             />
 
             {/* Error display */}

@@ -18,7 +18,9 @@ import {
   Lightbulb,
   Target,
   TrendingUp,
-  ChevronRight
+  ChevronRight,
+  Maximize2,
+  Minimize2
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { citationLinks, getRiskIndicator, timeEstimates } from '@/lib/rules/recommendations'
@@ -104,6 +106,31 @@ export function AIEnhancedRecommendationPane({
       setEnhancedRecommendations(recommendations.map(rec => ({ ...rec })))
     } finally {
       setIsEnhancing(false)
+    }
+  }
+
+  // New expand/collapse all functionality
+  const areAllExpanded = enhancedRecommendations.length > 0 && 
+    enhancedRecommendations.every((rec, index) => 
+      expandedRecs.has(rec.id || index.toString())
+    )
+
+  const expandAll = () => {
+    const allIds = new Set(
+      enhancedRecommendations.map((rec, index) => rec.id || index.toString())
+    )
+    setExpandedRecs(allIds)
+  }
+
+  const collapseAll = () => {
+    setExpandedRecs(new Set())
+  }
+
+  const toggleExpandAll = () => {
+    if (areAllExpanded) {
+      collapseAll()
+    } else {
+      expandAll()
     }
   }
 
@@ -233,6 +260,28 @@ export function AIEnhancedRecommendationPane({
             )}
           </CardTitle>
           <div className="flex items-center space-x-2">
+            {/* Expand All Button */}
+            {enhancedRecommendations.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={toggleExpandAll}
+                disabled={isEnhancing}
+                className="transition-all duration-200 hover:bg-primary/5"
+              >
+                {areAllExpanded ? (
+                  <>
+                    <Minimize2 className="h-4 w-4 mr-1" />
+                    Collapse All
+                  </>
+                ) : (
+                  <>
+                    <Maximize2 className="h-4 w-4 mr-1" />
+                    Expand All
+                  </>
+                )}
+              </Button>
+            )}
             <Button
               variant="outline"
               size="sm"
@@ -245,25 +294,45 @@ export function AIEnhancedRecommendationPane({
             </Button>
           </div>
         </div>
-        <CardDescription>
-          {isEnhancing ? (
-            <div className="flex items-center space-x-2">
-              <div className="flex space-x-1">
-                <div className="w-1 h-1 bg-primary rounded-full animate-bounce"></div>
-                <div className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                <div className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+        
+        {/* Enhanced CardDescription with expand all info */}
+        <div className="space-y-2">
+          <CardDescription>
+            {isEnhancing ? (
+              <div className="flex items-center space-x-2">
+                <div className="flex space-x-1">
+                  <div className="w-1 h-1 bg-primary rounded-full animate-bounce"></div>
+                  <div className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                </div>
+                <span className="text-primary">
+                  AI is analyzing incident context and enhancing recommendations...
+                </span>
               </div>
-              <span className="text-primary">
-                AI is analyzing incident context and enhancing recommendations...
+            ) : aiEnabled ? (
+              'AI-powered recommendations with context analysis and business impact'
+            ) : (
+              'Standard recommendations without AI enhancement'
+            )}
+          </CardDescription>
+          
+          {/* Quick stats and expand all hint */}
+          {enhancedRecommendations.length > 0 && !isEnhancing && (
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>
+                {enhancedRecommendations.length} recommendation{enhancedRecommendations.length > 1 ? 's' : ''} • 
+                {expandedRecs.size} expanded
               </span>
+              {expandedRecs.size > 0 && expandedRecs.size < enhancedRecommendations.length && (
+                <span className="text-primary/70 font-medium">
+                  Click "Expand All" to see all AI analysis
+                </span>
+              )}
             </div>
-          ) : aiEnabled ? (
-            'AI-powered recommendations with context analysis and business impact'
-          ) : (
-            'Standard recommendations without AI enhancement'
           )}
-        </CardDescription>
+        </div>
       </CardHeader>
+      
       <CardContent className="flex-1 overflow-hidden">
         {isEnhancing && enhancedRecommendations.length > 0 && (
           <div className="mb-4 p-3 bg-primary/5 border border-primary/20 rounded-lg">
@@ -281,7 +350,8 @@ export function AIEnhancedRecommendationPane({
           </div>
         )}
         
-        <ScrollArea className="h-[calc(100vh-16rem)] min-h-[600px] max-h-[1000px]">
+        {/* 🔧 FIXED: Responsive height that adapts to screen size */}
+        <ScrollArea className="h-[calc(100vh-18rem)] min-h-[250px] max-h-[calc(100vh-10rem)] sm:min-h-[350px] md:min-h-[450px] lg:min-h-[550px] xl:min-h-[600px]">
           <div className="space-y-4 pr-1">
             {enhancedRecommendations.map((rec, index) => {
               const isExpanded = expandedRecs.has(rec.id || index.toString())
